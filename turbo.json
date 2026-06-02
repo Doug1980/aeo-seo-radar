@@ -1,0 +1,32 @@
+cat > turbo.json << 'EOF'
+{
+    "$schema": "https://turbo.build/schema.json",
+    "pipeline": {
+        "build": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": [
+                ".next/**",
+                "!.next/cache/**",
+                "dist/**"
+            ]
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true
+        },
+        "test": {
+            "outputs": [
+                "coverage/**"
+            ]
+        },
+        "lint": {
+            "outputs": []
+        },
+        "clean": {
+            "cache": false
+        }
+    }
+}
+EOF

@@ -1,4 +1,3 @@
-cat > tsconfig.base.json << 'EOF'
 {
     "compilerOptions": {
         "target": "ES2022",
@@ -22,4 +21,3 @@ cat > tsconfig.base.json << 'EOF'
         "coverage"
     ]
 }
-EOF

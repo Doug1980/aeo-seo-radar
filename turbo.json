@@ -1,7 +1,6 @@
-cat > turbo.json << 'EOF'
 {
     "$schema": "https://turbo.build/schema.json",
-    "pipeline": {
+    "tasks": {
         "build": {
             "dependsOn": [
                 "^build"
@@ -29,4 +28,3 @@ cat > turbo.json << 'EOF'
         }
     }
 }
-EOF

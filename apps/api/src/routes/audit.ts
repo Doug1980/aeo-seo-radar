@@ -1,3 +1,4 @@
+import { generateRecommendations } from '../services/gemini.js'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
@@ -26,26 +27,35 @@ auditRoutes.post('/', zValidator('json', createAuditSchema), async (c) => {
   // Roda o PageSpeed em background
   runPageSpeedAudit(domain)
     .then(async (result) => {
-      const overall = Math.round(
-        (result.performance + result.seo) / 2
-      )
+  const overall = Math.round((result.performance + result.seo) / 2)
 
-      await db.update(audits)
-        .set({
-          status: 'completed',
-          completedAt: new Date(),
-          scores: {
-            overall,
-            seo: result.seo,
-            aeo: result.seo, // proxy por agora
-            performance: result.performance,
-            schemaMarkup: 0,
-          },
-        })
-        .where(eq(audits.id, audit!.id))
+  const scores = {
+    overall,
+    seo: result.seo,
+    aeo: result.seo,
+    performance: result.performance,
+    schemaMarkup: 0,
+  }
 
-      console.log(`✅ Auditoria concluída: ${domain} — Score: ${overall}`)
+  // Gera recomendações com Gemini
+  let recommendations: string[] = []
+  try {
+    recommendations = await generateRecommendations(domain, scores)
+    console.log(`🤖 Recomendações geradas:`, recommendations)
+  } catch (err) {
+    console.error('Gemini error:', err)
+  }
+
+  await db.update(audits)
+    .set({
+      status: 'completed',
+      completedAt: new Date(),
+      scores,
     })
+    .where(eq(audits.id, audit!.id))
+
+  console.log(`✅ Auditoria concluída: ${domain} — Score: ${overall}`)
+})
     .catch(async (err) => {
       await db.update(audits)
         .set({ status: 'failed' })

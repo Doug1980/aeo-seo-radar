@@ -4,6 +4,7 @@ import { zValidator } from '@hono/zod-validator'
 import { db } from '../db/index.js'
 import { audits } from '../db/schema.js'
 import { eq } from 'drizzle-orm'
+import { runPageSpeedAudit } from '../services/pagespeed.js'
 import type { ApiResponse, DomainAudit } from '@aeo-seo-radar/shared'
 
 export const auditRoutes = new Hono()
@@ -15,17 +16,43 @@ const createAuditSchema = z.object({
 auditRoutes.post('/', zValidator('json', createAuditSchema), async (c) => {
   const { domain } = c.req.valid('json')
 
+  // Cria auditoria com status running
   const [audit] = await db.insert(audits).values({
     domain,
-    status: 'pending',
-    scores: {
-      overall: 0,
-      seo: 0,
-      aeo: 0,
-      performance: 0,
-      schemaMarkup: 0,
-    },
+    status: 'running',
+    scores: { overall: 0, seo: 0, aeo: 0, performance: 0, schemaMarkup: 0 },
   }).returning()
+
+  // Roda o PageSpeed em background
+  runPageSpeedAudit(domain)
+    .then(async (result) => {
+      const overall = Math.round(
+        (result.performance + result.seo) / 2
+      )
+
+      await db.update(audits)
+        .set({
+          status: 'completed',
+          completedAt: new Date(),
+          scores: {
+            overall,
+            seo: result.seo,
+            aeo: result.seo, // proxy por agora
+            performance: result.performance,
+            schemaMarkup: 0,
+          },
+        })
+        .where(eq(audits.id, audit!.id))
+
+      console.log(`✅ Auditoria concluída: ${domain} — Score: ${overall}`)
+    })
+    .catch(async (err) => {
+      await db.update(audits)
+        .set({ status: 'failed' })
+        .where(eq(audits.id, audit!.id))
+
+      console.error(`❌ Auditoria falhou: ${domain}`, err.message)
+    })
 
   const response: ApiResponse<DomainAudit> = {
     data: {
@@ -35,7 +62,7 @@ auditRoutes.post('/', zValidator('json', createAuditSchema), async (c) => {
       createdAt: audit!.createdAt.toISOString(),
       scores: audit!.scores ?? { overall: 0, seo: 0, aeo: 0, performance: 0, schemaMarkup: 0 },
     },
-    message: 'Auditoria criada com sucesso',
+    message: 'Auditoria iniciada',
   }
 
   return c.json(response, 201)

@@ -11,7 +11,7 @@ export interface PageSpeedResult {
 
 export async function runPageSpeedAudit(url: string): Promise<PageSpeedResult> {
   const apiKey = process.env['PAGESPEED_API_KEY'] ?? 'AIzaSyDyNQkZvReWXxMipn9fqLwfsfh52bERuh0'
-  const endpoint = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=mobile&key=${apiKey}`
+  const endpoint = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=mobile&category=performance&category=seo&category=accessibility&category=best-practices&key=${apiKey}`
 
   const res = await fetch(endpoint)
 
@@ -24,6 +24,11 @@ export async function runPageSpeedAudit(url: string): Promise<PageSpeedResult> {
   const categories = data.lighthouseResult?.categories
   const audits = data.lighthouseResult?.audits
 
+  console.log('PageSpeed raw scores:', {
+  performance: Math.round((categories?.performance?.score ?? 0) * 100),
+  seo: Math.round((categories?.seo?.score ?? 0) * 100),
+})
+
   return {
     performance: Math.round((categories?.performance?.score ?? 0) * 100),
     seo: Math.round((categories?.seo?.score ?? 0) * 100),
@@ -34,4 +39,5 @@ export async function runPageSpeedAudit(url: string): Promise<PageSpeedResult> {
     cls: audits?.['cumulative-layout-shift']?.numericValue ?? 0,
     ttfb: Math.round((audits?.['server-response-time']?.numericValue ?? 0)),
   }
+  
 }

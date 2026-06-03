@@ -30,7 +30,13 @@ export default function Home() {
   }
 
   async function pollAudit(id: string) {
-    const interval = setInterval(async () => {
+  let attempts = 0
+  const maxAttempts = 30 // 30 * 8s = 4 minutos
+
+  const interval = setInterval(async () => {
+    attempts++
+
+    try {
       const res = await fetch(`http://localhost:3001/api/v1/audits/${id}`)
       const body = await res.json()
       const updated: DomainAudit = body.data
@@ -41,8 +47,16 @@ export default function Home() {
         clearInterval(interval)
         setPolling(false)
       }
-    }, 3000)
-  }
+
+      if (attempts >= maxAttempts) {
+        clearInterval(interval)
+        setPolling(false)
+      }
+    } catch (err) {
+      console.error('Polling error:', err)
+    }
+  }, 8000) // 8 segundos
+}
 
   const scores = [
     { label: 'Score Geral', value: audit?.scores.overall },

@@ -7,6 +7,7 @@ export interface DomainAudit {
   createdAt: string
   completedAt?: string
   scores: AuditScores
+  recommendations?: string[]
 }
 
 export interface AuditScores {

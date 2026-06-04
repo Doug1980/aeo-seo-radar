@@ -30,33 +30,29 @@ export default function Home() {
   }
 
   async function pollAudit(id: string) {
-  let attempts = 0
-  const maxAttempts = 30 // 30 * 8s = 4 minutos
+    let attempts = 0
+    const maxAttempts = 30
 
-  const interval = setInterval(async () => {
-    attempts++
-
-    try {
-      const res = await fetch(`http://localhost:3001/api/v1/audits/${id}`)
-      const body = await res.json()
-      const updated: DomainAudit = body.data
-
-      setAudit(updated)
-
-      if (updated.status === 'completed' || updated.status === 'failed') {
-        clearInterval(interval)
-        setPolling(false)
+    const interval = setInterval(async () => {
+      attempts++
+      try {
+        const res = await fetch(`http://localhost:3001/api/v1/audits/${id}`)
+        const body = await res.json()
+        const updated: DomainAudit = body.data
+        setAudit(updated)
+        if (updated.status === 'completed' || updated.status === 'failed') {
+          clearInterval(interval)
+          setPolling(false)
+        }
+        if (attempts >= maxAttempts) {
+          clearInterval(interval)
+          setPolling(false)
+        }
+      } catch (err) {
+        console.error('Polling error:', err)
       }
-
-      if (attempts >= maxAttempts) {
-        clearInterval(interval)
-        setPolling(false)
-      }
-    } catch (err) {
-      console.error('Polling error:', err)
-    }
-  }, 8000) // 8 segundos
-}
+    }, 8000)
+  }
 
   const scores = [
     { label: 'Score Geral', value: audit?.scores.overall },
@@ -106,15 +102,31 @@ export default function Home() {
         </div>
 
         {audit ? (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-            <h3 className={`font-semibold mb-3 ${audit.status === 'completed' ? 'text-green-400' : audit.status === 'failed' ? 'text-red-400' : 'text-yellow-400'}`}>
-              {audit.status === 'completed' ? '✅ Auditoria concluída' : audit.status === 'failed' ? '❌ Auditoria falhou' : '⏳ Auditando...'}
-            </h3>
-            <div className="text-sm text-gray-400 space-y-1">
-              <p><span className="text-gray-300">Domínio:</span> {audit.domain}</p>
-              <p><span className="text-gray-300">Status:</span> {audit.status}</p>
-              <p><span className="text-gray-300">Criado em:</span> {new Date(audit.createdAt).toLocaleString('pt-BR')}</p>
+          <div>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <h3 className={`font-semibold mb-3 ${audit.status === 'completed' ? 'text-green-400' : audit.status === 'failed' ? 'text-red-400' : 'text-yellow-400'}`}>
+                {audit.status === 'completed' ? '✅ Auditoria concluída' : audit.status === 'failed' ? '❌ Auditoria falhou' : '⏳ Auditando...'}
+              </h3>
+              <div className="text-sm text-gray-400 space-y-1">
+                <p><span className="text-gray-300">Domínio:</span> {audit.domain}</p>
+                <p><span className="text-gray-300">Status:</span> {audit.status}</p>
+                <p><span className="text-gray-300">Criado em:</span> {new Date(audit.createdAt).toLocaleString('pt-BR')}</p>
+              </div>
             </div>
+
+            {audit.recommendations && audit.recommendations.length > 0 && (
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mt-4">
+                <h3 className="font-semibold mb-4 text-blue-400">🤖 Recomendações da IA</h3>
+                <ul className="space-y-3">
+                  {audit.recommendations.map((rec, i) => (
+                    <li key={i} className="flex gap-3 text-sm text-gray-300">
+                      <span className="text-blue-400 font-bold shrink-0">{i + 1}.</span>
+                      <span>{rec}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         ) : (
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-12 text-center">

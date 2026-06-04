@@ -18,6 +18,7 @@ export const audits = pgTable('audits', {
     performance: number
     schemaMarkup: number
   }>(),
+  recommendations: jsonb('recommendations').$type<string[]>(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   completedAt: timestamp('completed_at'),
 })

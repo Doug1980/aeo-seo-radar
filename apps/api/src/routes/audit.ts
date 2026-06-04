@@ -47,12 +47,13 @@ auditRoutes.post('/', zValidator('json', createAuditSchema), async (c) => {
   }
 
   await db.update(audits)
-    .set({
-      status: 'completed',
-      completedAt: new Date(),
-      scores,
-    })
-    .where(eq(audits.id, audit!.id))
+  .set({
+    status: 'completed',
+    completedAt: new Date(),
+    scores,
+    recommendations,
+  })
+  .where(eq(audits.id, audit!.id))
 
   console.log(`✅ Auditoria concluída: ${domain} — Score: ${overall}`)
 })

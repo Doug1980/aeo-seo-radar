@@ -8,6 +8,13 @@
       "when": 1780418556982,
       "tag": "0000_elite_thunderbird",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1780574814405,
+      "tag": "0001_pink_quentin_quire",
+      "breakpoints": true
     }
   ]
 }

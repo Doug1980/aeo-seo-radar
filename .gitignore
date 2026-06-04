@@ -1,11 +1,10 @@
-cat > .gitignore << 'EOF'
 node_modules/
 dist/
 .next/
 .env
 .env.local
+.env.*.local
 coverage/
 .turbo/
 .DS_Store
 *.log
-EOF

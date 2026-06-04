@@ -5,6 +5,7 @@ export async function generateRecommendations(
   scores: AuditScores
 ): Promise<string[]> {
   const apiKey = process.env['GEMINI_API_KEY'] ?? ''
+  console.log('Gemini key length:', apiKey.length)
 
   const prompt = `
 Você é um especialista em SEO e AEO (Answer Engine Optimization).
@@ -20,7 +21,7 @@ Retorne APENAS um array JSON com 5 strings, sem explicações extras. Exemplo:
 `
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -30,7 +31,10 @@ Retorne APENAS um array JSON com 5 strings, sem explicações extras. Exemplo:
     }
   )
 
-  if (!res.ok) throw new Error(`Gemini API error: ${res.status}`)
+  if (!res.ok) {
+  const errBody = await res.json()
+  throw new Error(`Gemini API error: ${res.status} - ${JSON.stringify(errBody)}`)
+}
 
   const data = await res.json()
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '[]'

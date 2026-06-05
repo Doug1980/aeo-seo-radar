@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useCreateAudit } from './hooks/useAudit'
+import { useCreateAudit, useAuditHistory } from './hooks/useAudit'
 import type { DomainAudit } from '@aeo-seo-radar/shared'
 
 function ScoreColor(score: number) {
@@ -15,6 +15,7 @@ export default function Home() {
   const [audit, setAudit] = useState<DomainAudit | null>(null)
   const [polling, setPolling] = useState(false)
   const { mutate, isPending, error } = useCreateAudit()
+  const { data: history, refetch } = useAuditHistory()
 
   function handleSubmit() {
     if (!url) return
@@ -43,6 +44,7 @@ export default function Home() {
         if (updated.status === 'completed' || updated.status === 'failed') {
           clearInterval(interval)
           setPolling(false)
+          refetch()
         }
         if (attempts >= maxAttempts) {
           clearInterval(interval)
@@ -102,7 +104,7 @@ export default function Home() {
         </div>
 
         {audit ? (
-          <div>
+          <div className="mb-8">
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
               <h3 className={`font-semibold mb-3 ${audit.status === 'completed' ? 'text-green-400' : audit.status === 'failed' ? 'text-red-400' : 'text-yellow-400'}`}>
                 {audit.status === 'completed' ? '✅ Auditoria concluída' : audit.status === 'failed' ? '❌ Auditoria falhou' : '⏳ Auditando...'}
@@ -129,8 +131,37 @@ export default function Home() {
             )}
           </div>
         ) : (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-12 text-center">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-12 text-center mb-8">
             <p className="text-gray-500 text-lg">Insira uma URL acima para iniciar a auditoria</p>
+          </div>
+        )}
+
+        {/* Histórico */}
+        {history && history.length > 0 && (
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+            <h2 className="text-lg font-semibold mb-4">Histórico de Auditorias</h2>
+            <div className="space-y-3">
+              {history.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => setAudit(item)}
+                  className="flex items-center justify-between p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors"
+                >
+                  <div>
+                    <p className="text-sm text-white">{item.domain}</p>
+                    <p className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleString('pt-BR')}</p>
+                  </div>
+                  <div className="flex gap-4 text-sm">
+                    <span className={item.scores.overall > 0 ? ScoreColor(item.scores.overall) : 'text-gray-500'}>
+                      {item.scores.overall > 0 ? item.scores.overall : '--'}
+                    </span>
+                    <span className={`text-xs px-2 py-1 rounded ${item.status === 'completed' ? 'bg-green-900 text-green-400' : item.status === 'failed' ? 'bg-red-900 text-red-400' : 'bg-yellow-900 text-yellow-400'}`}>
+                      {item.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

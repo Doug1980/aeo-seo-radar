@@ -1,6 +1,6 @@
 'use client'
 
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import type { ApiResponse, DomainAudit } from '@aeo-seo-radar/shared'
 
 async function createAudit(domain: string): Promise<ApiResponse<DomainAudit>> {
@@ -21,5 +21,17 @@ async function createAudit(domain: string): Promise<ApiResponse<DomainAudit>> {
 export function useCreateAudit() {
   return useMutation({
     mutationFn: createAudit,
+  })
+}
+
+export function useAuditHistory() {
+  return useQuery({
+    queryKey: ['audits'],
+    queryFn: async (): Promise<DomainAudit[]> => {
+      const res = await fetch('http://localhost:3001/api/v1/audits')
+      const body = await res.json()
+      return body.data
+    },
+    refetchInterval: false,
   })
 }

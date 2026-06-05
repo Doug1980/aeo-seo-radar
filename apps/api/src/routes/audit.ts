@@ -79,6 +79,26 @@ auditRoutes.post('/', zValidator('json', createAuditSchema), async (c) => {
   return c.json(response, 201)
 })
 
+auditRoutes.get('/', async (c) => {
+  const allAudits = await db.query.audits.findMany({
+    orderBy: (audits, { desc }) => [desc(audits.createdAt)],
+    limit: 20,
+  })
+
+  const response = {
+    data: allAudits.map((audit) => ({
+      id: audit.id,
+      domain: audit.domain,
+      status: audit.status,
+      createdAt: audit.createdAt.toISOString(),
+      completedAt: audit.completedAt?.toISOString(),
+      scores: audit.scores ?? { overall: 0, seo: 0, aeo: 0, performance: 0, schemaMarkup: 0 },
+    })),
+  }
+
+  return c.json(response)
+})
+
 auditRoutes.get('/:id', async (c) => {
   const id = c.req.param('id')
 

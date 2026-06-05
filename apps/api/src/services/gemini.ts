@@ -36,8 +36,9 @@ Retorne APENAS um array JSON com 5 strings, sem explicações extras. Exemplo:
   throw new Error(`Gemini API error: ${res.status} - ${JSON.stringify(errBody)}`)
 }
 
-  const data = await res.json()
+  const data: any = await res.json()
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '[]'
+
 
   const clean = text.replace(/```json|```/g, '').trim()
   return JSON.parse(clean)

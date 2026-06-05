@@ -7,6 +7,12 @@ import { audits } from '../db/schema.js'
 import { eq } from 'drizzle-orm'
 import { runPageSpeedAudit } from '../services/pagespeed.js'
 import type { ApiResponse, DomainAudit } from '@aeo-seo-radar/shared'
+import { analyzeSchema } from '../services/schema.js'
+
+type SchemaResultSafe = { hasSchema: boolean; types: string[]; score: number }
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+declare const console: { log: (...args: any[]) => void; error: (...args: any[]) => void }
 
 export const auditRoutes = new Hono()
 
@@ -17,24 +23,36 @@ const createAuditSchema = z.object({
 auditRoutes.post('/', zValidator('json', createAuditSchema), async (c) => {
   const { domain } = c.req.valid('json')
 
-  // Cria auditoria com status running
+  // Cria auditoria com status pending (contrato consistente com DB/test)
   const [audit] = await db.insert(audits).values({
     domain,
-    status: 'running',
+    status: 'pending',
     scores: { overall: 0, seo: 0, aeo: 0, performance: 0, schemaMarkup: 0 },
   }).returning()
+
+  // Marca como running antes de iniciar jobs
+  await db.update(audits)
+    .set({ status: 'running' })
+    .where(eq(audits.id, audit!.id))
 
   // Roda o PageSpeed em background
   runPageSpeedAudit(domain)
     .then(async (result) => {
-  const overall = Math.round((result.performance + result.seo) / 2)
+      const overall = Math.round((result.performance + result.seo) / 2)
 
-  const scores = {
-    overall,
+      // Analisa schema markup para AEO real
+      const schemaResult = await analyzeSchema(domain).catch((err) => {
+        console.error('Schema analysis error:', err)
+        return { hasSchema: false, types: [] as string[], score: 0 }
+      })
+
+      const scores = {
+
+    overall: Math.round((result.performance + result.seo + schemaResult.score) / 3),
     seo: result.seo,
-    aeo: result.seo,
+    aeo: schemaResult.score,
     performance: result.performance,
-    schemaMarkup: 0,
+    schemaMarkup: schemaResult.score,
   }
 
   // Gera recomendações com Gemini
@@ -47,15 +65,15 @@ auditRoutes.post('/', zValidator('json', createAuditSchema), async (c) => {
   }
 
   await db.update(audits)
-  .set({
-    status: 'completed',
-    completedAt: new Date(),
-    scores,
-    recommendations,
-  })
-  .where(eq(audits.id, audit!.id))
+    .set({
+      status: 'completed',
+      completedAt: new Date(),
+      scores,
+      recommendations,
+    })
+    .where(eq(audits.id, audit!.id))
 
-  console.log(`✅ Auditoria concluída: ${domain} — Score: ${overall}`)
+  console.log(`✅ Auditoria concluída: ${domain} — Score: ${scores.overall}`)
 })
     .catch(async (err) => {
       await db.update(audits)

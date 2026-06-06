@@ -74,41 +74,58 @@ export default function Home() {
           {scores.map((card) => (
             <div key={card.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5 text-center">
               <p className="text-gray-500 text-sm mb-1">{card.label}</p>
-              <p className={`text-4xl font-bold ${card.value !== undefined && card.value > 0 ? ScoreColor(card.value) : 'text-gray-400'}`}>
-                {card.value !== undefined && card.value > 0 ? card.value : '--'}
-              </p>
+              {isPolling ? (
+                // Skeleton animado enquanto a auditoria está rodando
+                <div className="h-10 w-16 mx-auto rounded-lg bg-gray-700 animate-pulse" />
+              ) : (
+                <p className={`text-4xl font-bold ${card.value !== undefined && card.value > 0 ? ScoreColor(card.value) : 'text-gray-400'}`}>
+                  {card.value !== undefined && card.value > 0 ? card.value : '--'}
+                </p>
+              )}
             </div>
           ))}
         </div>
 
         {currentAudit ? (
-          <div className="mb-8">
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-              <h3 className={`font-semibold mb-3 ${currentAudit.status === 'completed' ? 'text-green-400' : currentAudit.status === 'failed' ? 'text-red-400' : 'text-yellow-400'}`}>
-                {currentAudit.status === 'completed' ? '✅ Auditoria concluída' : currentAudit.status === 'failed' ? '❌ Auditoria falhou' : '⏳ Auditando...'}
-              </h3>
-              <div className="text-sm text-gray-400 space-y-1">
-                <p><span className="text-gray-300">Domínio:</span> {currentAudit.domain}</p>
-                <p><span className="text-gray-300">Status:</span> {currentAudit.status}</p>
-                <p><span className="text-gray-300">Criado em:</span> {formatDate(currentAudit.createdAt)}</p>
-              </div>
-            </div>
+  <div className="mb-8">
+    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+      <h3 className={`font-semibold mb-3 ${currentAudit.status === 'completed' ? 'text-green-400' : currentAudit.status === 'failed' ? 'text-red-400' : 'text-yellow-400'}`}>
+        {currentAudit.status === 'completed' ? '✅ Auditoria concluída' : currentAudit.status === 'failed' ? '❌ Auditoria falhou' : '⏳ Auditando...'}
+      </h3>
+      <div className="text-sm text-gray-400 space-y-1">
+        <p><span className="text-gray-300">Domínio:</span> {currentAudit.domain}</p>
+        <p><span className="text-gray-300">Status:</span> {currentAudit.status}</p>
+        <p><span className="text-gray-300">Criado em:</span> {formatDate(currentAudit.createdAt)}</p>
+      </div>
+    </div>
 
-            {currentAudit.recommendations && currentAudit.recommendations.length > 0 && (
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mt-4">
-                <h3 className="font-semibold mb-4 text-blue-400">🤖 Recomendações da IA</h3>
-                <ul className="space-y-3">
-                  {currentAudit.recommendations.map((rec, i) => (
-                    <li key={i} className="flex gap-3 text-sm text-gray-300">
-                      <span className="text-blue-400 font-bold shrink-0">{i + 1}.</span>
-                      <span>{rec}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        ) : (
+    {isPolling && (
+      // Skeleton das recommendations enquanto aguarda
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mt-4">
+        <div className="h-4 w-48 rounded bg-gray-700 animate-pulse mb-4" />
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-3 rounded bg-gray-700 animate-pulse" style={{ width: `${70 + i * 5}%` }} />
+          ))}
+        </div>
+      </div>
+    )}
+
+    {!isPolling && currentAudit.recommendations && currentAudit.recommendations.length > 0 && (
+                <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mt-4">
+                  <h3 className="font-semibold mb-4 text-blue-400">🤖 Recomendações da IA</h3>
+                  <ul className="space-y-3">
+                    {currentAudit.recommendations.map((rec, i) => (
+                      <li key={i} className="flex gap-3 text-sm text-gray-300">
+                        <span className="text-blue-400 font-bold shrink-0">{i + 1}.</span>
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ) : (
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-12 text-center mb-8">
             <p className="text-gray-500 text-lg">Insira uma URL acima para iniciar a auditoria</p>
           </div>

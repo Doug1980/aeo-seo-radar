@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { useCreateAudit, useAuditHistory } from './hooks/useAudit'
-import type { DomainAudit } from '@aeo-seo-radar/shared'
+import { useState, useEffect, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useCreateAudit, useAuditHistory, useAuditById } from './hooks/useAudit'
 
 function ScoreColor(score: number) {
   if (score >= 90) return 'text-green-400'
@@ -24,30 +24,39 @@ function formatDate(iso: string) {
 export default function Home() {
   const [url, setUrl] = useState('')
   const [selectedAuditId, setSelectedAuditId] = useState<string | null>(null)
-  
+  const [isPolling, setIsPolling] = useState(false)
+
+  const queryClient = useQueryClient()
   const { mutate, isPending, error } = useCreateAudit()
-  
-  // O React Query gerencia o polling de forma limpa e nativa baseado no estado do histórico
-  const { data: history, refetch } = useAuditHistory({
-    refetchInterval: (query) => {
-      // Se houver qualquer auditoria ativa em background no histórico, atualiza a árvore a cada 5 segundos
-      const hasRunningAudits = query.state.data?.some(
-        (audit) => audit.status === 'running' || audit.status === 'pending'
-      )
-      return hasRunningAudits ? 5000 : false
+  const { data: history } = useAuditHistory()
+
+  const activeId = selectedAuditId || history?.[0]?.id || null
+  const { data: currentAudit } = useAuditById(activeId, isPolling, () => {
+  setIsPolling(false)
+  queryClient.invalidateQueries({ queryKey: ['audit-history'] })
+})
+
+  // Desliga o polling quando a auditoria terminar e atualiza o histórico
+  useEffect(() => {
+    if (!currentAudit) return
+
+    const isDone =
+      (currentAudit.status === 'completed' && (currentAudit.recommendations?.length ?? 0) > 0) ||
+      currentAudit.status === 'failed'
+
+    if (isDone && isPolling) {
+      setIsPolling(false)
+      queryClient.invalidateQueries({ queryKey: ['audit-history'] })
     }
-  })
+  }, [currentAudit?.status, currentAudit?.recommendations?.length, isPolling])
 
-  // Encontra a auditoria ativa selecionada direto da fonte da verdade (o cache do histórico)
-  const currentAudit = history?.find((a) => a.id === selectedAuditId) || history?.[0] || null
-  const isGlobalPolling = history?.some((a) => a.status === 'running' || a.status === 'pending')
-
+  // Liga o polling quando uma nova auditoria é criada
   function handleSubmit() {
     if (!url) return
     mutate(url, {
       onSuccess: (res) => {
         setSelectedAuditId(res.data.id)
-        refetch()
+        setIsPolling(true)
       },
     })
   }
@@ -79,10 +88,10 @@ export default function Home() {
             />
             <button
               onClick={handleSubmit}
-              disabled={isPending || !url || isGlobalPolling}
+              disabled={isPending || !url || isPolling}
               className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
             >
-              {isPending || isGlobalPolling ? 'Auditando...' : 'Auditar'}
+              {isPending || isPolling ? 'Auditando...' : 'Auditar'}
             </button>
           </div>
           {error && <p className="text-red-400 text-sm mt-2">{error.message}</p>}

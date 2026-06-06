@@ -9,14 +9,30 @@ import type { ApiResponse, DomainAudit } from '@aeo-seo-radar/shared'
 
 export const auditRoutes = new Hono()
 
+// ─── Contrato central de resposta ────────────────────────────────────────────
+// Qualquer campo novo adicionado ao tipo DomainAudit deve vir aqui.
+// O TypeScript avisa se algo estiver faltando — o compilador vira o guardião.
+function toAuditResponse(audit: typeof audits.$inferSelect): DomainAudit {
+  return {
+    id: audit.id,
+    domain: audit.domain,
+    status: audit.status,
+    createdAt: audit.createdAt.toISOString(),
+    completedAt: audit.completedAt?.toISOString(),
+    scores: audit.scores ?? { overall: 0, seo: 0, aeo: 0, performance: 0, schemaMarkup: 0 },
+    recommendations: audit.recommendations ?? [],
+  }
+}
+
+// ─── Schemas de validação ─────────────────────────────────────────────────────
 const createAuditSchema = z.object({
   domain: z.string().url({ message: 'Informe uma URL válida' }),
 })
 
+// ─── POST / — Cria uma nova auditoria ────────────────────────────────────────
 auditRoutes.post('/', zValidator('json', createAuditSchema), async (c) => {
   const { domain } = c.req.valid('json')
 
-  // 1. Cria a auditoria com status pending inicial
   const [audit] = await db.insert(audits).values({
     domain,
     status: 'pending',
@@ -27,49 +43,35 @@ auditRoutes.post('/', zValidator('json', createAuditSchema), async (c) => {
     return c.json({ error: 'Erro ao criar auditoria no banco' }, 500)
   }
 
-  // 2. Transiciona para running antes de disparar o processo
   await db.update(audits)
     .set({ status: 'running' })
     .where(eq(audits.id, audit.id))
 
-  // 3. Dispara o serviço em background (sem await) para liberar a rota imediatamente
+  // Dispara em background sem bloquear a resposta
   startBackgroundAudit(audit.id, domain)
 
-  // 4. Resposta síncrona imediata para o Frontend
   const response: ApiResponse<DomainAudit> = {
-    data: {
-      id: audit.id,
-      domain: audit.domain,
-      status: 'running', // Já informa o frontend que o processo começou
-      createdAt: audit.createdAt.toISOString(),
-      scores: audit.scores ?? { overall: 0, seo: 0, aeo: 0, performance: 0, schemaMarkup: 0 },
-    },
-    message: 'Auditoria iniciada',
+    data: toAuditResponse(audit),
   }
 
   return c.json(response, 201)
 })
 
+// ─── GET / — Lista as auditorias recentes ────────────────────────────────────
 auditRoutes.get('/', async (c) => {
   const allAudits = await db.query.audits.findMany({
     orderBy: (audits, { desc }) => [desc(audits.createdAt)],
     limit: 20,
   })
 
-  const response = {
-    data: allAudits.map((audit) => ({
-      id: audit.id,
-      domain: audit.domain,
-      status: audit.status,
-      createdAt: audit.createdAt.toISOString(),
-      completedAt: audit.completedAt?.toISOString(),
-      scores: audit.scores ?? { overall: 0, seo: 0, aeo: 0, performance: 0, schemaMarkup: 0 },
-    })),
+  const response: ApiResponse<DomainAudit[]> = {
+    data: allAudits.map(toAuditResponse),
   }
 
   return c.json(response)
 })
 
+// ─── GET /:id — Retorna uma auditoria completa (com recommendations) ─────────
 auditRoutes.get('/:id', async (c) => {
   const id = c.req.param('id')
 
@@ -82,14 +84,7 @@ auditRoutes.get('/:id', async (c) => {
   }
 
   const response: ApiResponse<DomainAudit> = {
-    data: {
-      id: audit.id,
-      domain: audit.domain,
-      status: audit.status,
-      createdAt: audit.createdAt.toISOString(),
-      completedAt: audit.completedAt?.toISOString(),
-      scores: audit.scores ?? { overall: 0, seo: 0, aeo: 0, performance: 0, schemaMarkup: 0 },
-    },
+    data: toAuditResponse(audit),
   }
 
   return c.json(response)

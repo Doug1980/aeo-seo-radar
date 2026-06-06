@@ -3,7 +3,8 @@ import { audits } from '../db/schema.js'
 import { eq } from 'drizzle-orm'
 import { runPageSpeedAudit } from './pagespeed.js'
 import { analyzeSchema } from './schema.js'
-import { generateRecommendations } from './gemini.js'
+import { generateRecommendations } from './groq.js'
+//import { generateRecommendations } from './gemini.js'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare const console: { log: (...args: any[]) => void; error: (...args: any[]) => void }

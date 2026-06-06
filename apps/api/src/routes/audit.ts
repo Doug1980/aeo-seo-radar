@@ -75,6 +75,12 @@ auditRoutes.get('/', async (c) => {
 auditRoutes.get('/:id', async (c) => {
   const id = c.req.param('id')
 
+  // Valida formato uuid antes de bater no banco
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!uuidRegex.test(id)) {
+    return c.json({ error: 'Auditoria não encontrada', code: 'NOT_FOUND' }, 404)
+  }
+
   const audit = await db.query.audits.findFirst({
     where: eq(audits.id, id),
   })

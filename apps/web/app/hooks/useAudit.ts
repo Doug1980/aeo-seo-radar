@@ -28,14 +28,13 @@ export function useAuditById(
       const body = await res.json()
       const data: DomainAudit = body.data
 
-      console.log('STATUS:', data.status)
-      console.log('RECOMMENDATIONS:', data.recommendations)
+     
 
       const isDone =
         (data.status === 'completed' && data.recommendations?.length > 0) ||
         data.status === 'failed'
 
-      console.log('IS DONE:', isDone)
+  
 
       if (isDone) onDone?.()
 

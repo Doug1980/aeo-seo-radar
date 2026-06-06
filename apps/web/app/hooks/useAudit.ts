@@ -1,37 +1,66 @@
-'use client'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { DomainAudit, ApiResponse } from '@aeo-seo-radar/shared'
 
-import { useMutation, useQuery } from '@tanstack/react-query'
-import type { ApiResponse, DomainAudit } from '@aeo-seo-radar/shared'
-
-async function createAudit(domain: string): Promise<ApiResponse<DomainAudit>> {
-  const res = await fetch('http://localhost:3001/api/v1/audits', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ domain }),
-  })
-
-  if (!res.ok) {
-    const error = await res.json()
-    throw new Error(error.error ?? 'Erro ao criar auditoria')
-  }
-
-  return res.json()
-}
-
-export function useCreateAudit() {
-  return useMutation({
-    mutationFn: createAudit,
-  })
-}
+const API = 'http://localhost:3001/api/v1'
 
 export function useAuditHistory() {
-  return useQuery({
-    queryKey: ['audits'],
-    queryFn: async (): Promise<DomainAudit[]> => {
-      const res = await fetch('http://localhost:3001/api/v1/audits')
+  return useQuery<DomainAudit[]>({
+    queryKey: ['audit-history'],
+    queryFn: async () => {
+      const res = await fetch(`${API}/audits`)
+      if (!res.ok) throw new Error('Erro ao buscar histórico')
       const body = await res.json()
       return body.data
     },
-    refetchInterval: false,
+  })
+}
+
+export function useAuditById(
+  id: string | null,
+  enablePolling: boolean = false,
+  onDone?: () => void
+) {
+  return useQuery<DomainAudit>({
+    queryKey: ['audit', id],
+    queryFn: async () => {
+      const res = await fetch(`${API}/audits/${id}`)
+      if (!res.ok) throw new Error('Erro ao buscar auditoria')
+      const body = await res.json()
+      const data: DomainAudit = body.data
+
+     
+
+      const isDone =
+        (data.status === 'completed' && data.recommendations?.length > 0) ||
+        data.status === 'failed'
+
+  
+
+      if (isDone) onDone?.()
+
+      return data
+    },
+    enabled: !!id,
+    refetchOnWindowFocus: false,
+    refetchInterval: enablePolling ? 5000 : false,
+  })
+}
+
+export function useCreateAudit() {
+  const queryClient = useQueryClient()
+
+  return useMutation<ApiResponse<DomainAudit>, Error, string>({
+    mutationFn: async (domain: string) => {
+      const res = await fetch(`${API}/audits`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain }),
+      })
+      if (!res.ok) throw new Error('Falha ao iniciar auditoria')
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['audit-history'] })
+    },
   })
 }

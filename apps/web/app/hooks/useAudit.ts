@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { DomainAudit, ApiResponse } from '@aeo-seo-radar/shared'
 
-const API = 'http://localhost:3001/api/v1'
+const API = `${process.env.NEXT_PUBLIC_API_URL}/api/v1`
 
 export function useAuditHistory() {
   return useQuery<DomainAudit[]>({

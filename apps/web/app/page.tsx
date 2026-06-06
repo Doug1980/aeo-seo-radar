@@ -153,7 +153,7 @@ export default function Home() {
                 >
                   <div>
                     <p className="text-sm text-white">{item.domain}</p>
-                    <p className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleString('pt-BR')}</p>
+                    <p className="text-xs text-gray-500">{formatDate(item.createdAt)}</p>
                   </div>
                   <div className="flex gap-4 text-sm">
                     <span className={item.scores?.overall > 0 ? ScoreColor(item.scores.overall) : 'text-gray-500'}>

@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { useCreateAudit, useAuditHistory, useAuditById } from './hooks/useAudit'
+import { useState } from 'react'
+import { useAuditFlow } from './hooks/useAuditFlow'
 
 function ScoreColor(score: number) {
   if (score >= 90) return 'text-green-400'
@@ -23,43 +22,17 @@ function formatDate(iso: string) {
 
 export default function Home() {
   const [url, setUrl] = useState('')
-  const [selectedAuditId, setSelectedAuditId] = useState<string | null>(null)
-  const [isPolling, setIsPolling] = useState(false)
 
-  const queryClient = useQueryClient()
-  const { mutate, isPending, error } = useCreateAudit()
-  const { data: history } = useAuditHistory()
-
-  const activeId = selectedAuditId || history?.[0]?.id || null
-  const { data: currentAudit } = useAuditById(activeId, isPolling, () => {
-  setIsPolling(false)
-  queryClient.invalidateQueries({ queryKey: ['audit-history'] })
-})
-
-  // Desliga o polling quando a auditoria terminar e atualiza o histórico
-  useEffect(() => {
-    if (!currentAudit) return
-
-    const isDone =
-      (currentAudit.status === 'completed' && (currentAudit.recommendations?.length ?? 0) > 0) ||
-      currentAudit.status === 'failed'
-
-    if (isDone && isPolling) {
-      setIsPolling(false)
-      queryClient.invalidateQueries({ queryKey: ['audit-history'] })
-    }
-  }, [currentAudit?.status, currentAudit?.recommendations?.length, isPolling])
-
-  // Liga o polling quando uma nova auditoria é criada
-  function handleSubmit() {
-    if (!url) return
-    mutate(url, {
-      onSuccess: (res) => {
-        setSelectedAuditId(res.data.id)
-        setIsPolling(true)
-      },
-    })
-  }
+  const {
+    currentAudit,
+    history,
+    isPolling,
+    isPending,
+    error,
+    selectedAuditId,
+    selectAudit,
+    startAudit,
+  } = useAuditFlow()
 
   const scores = [
     { label: 'Score Geral', value: currentAudit?.scores?.overall },
@@ -87,7 +60,7 @@ export default function Home() {
               className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
             />
             <button
-              onClick={handleSubmit}
+              onClick={() => startAudit(url)}
               disabled={isPending || !url || isPolling}
               className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
             >
@@ -148,8 +121,8 @@ export default function Home() {
               {history.map((item) => (
                 <div
                   key={item.id}
-                  onClick={() => setSelectedAuditId(item.id)}
-                  className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${item.id === currentAudit?.id ? 'bg-gray-700 border border-blue-500' : 'bg-gray-800 hover:bg-gray-700'}`}
+                  onClick={() => selectAudit(item.id)}
+                  className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${item.id === selectedAuditId ? 'bg-gray-700 border border-blue-500' : 'bg-gray-800 hover:bg-gray-700'}`}
                 >
                   <div>
                     <p className="text-sm text-white">{item.domain}</p>

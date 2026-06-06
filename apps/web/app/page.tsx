@@ -10,57 +10,53 @@ function ScoreColor(score: number) {
   return 'text-red-400'
 }
 
+function formatDate(iso: string) {
+  return new Intl.DateTimeFormat('pt-BR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  }).format(new Date(iso))
+}
+
 export default function Home() {
   const [url, setUrl] = useState('')
-  const [audit, setAudit] = useState<DomainAudit | null>(null)
-  const [polling, setPolling] = useState(false)
+  const [selectedAuditId, setSelectedAuditId] = useState<string | null>(null)
+  
   const { mutate, isPending, error } = useCreateAudit()
-  const { data: history, refetch } = useAuditHistory()
+  
+  // O React Query gerencia o polling de forma limpa e nativa baseado no estado do histórico
+  const { data: history, refetch } = useAuditHistory({
+    refetchInterval: (query) => {
+      // Se houver qualquer auditoria ativa em background no histórico, atualiza a árvore a cada 5 segundos
+      const hasRunningAudits = query.state.data?.some(
+        (audit) => audit.status === 'running' || audit.status === 'pending'
+      )
+      return hasRunningAudits ? 5000 : false
+    }
+  })
+
+  // Encontra a auditoria ativa selecionada direto da fonte da verdade (o cache do histórico)
+  const currentAudit = history?.find((a) => a.id === selectedAuditId) || history?.[0] || null
+  const isGlobalPolling = history?.some((a) => a.status === 'running' || a.status === 'pending')
 
   function handleSubmit() {
     if (!url) return
     mutate(url, {
       onSuccess: (res) => {
-        setAudit(res.data)
-        if (res.data.status === 'running') {
-          setPolling(true)
-          pollAudit(res.data.id)
-        }
+        setSelectedAuditId(res.data.id)
+        refetch()
       },
     })
   }
 
-  async function pollAudit(id: string) {
-    let attempts = 0
-    const maxAttempts = 30
-
-    const interval = setInterval(async () => {
-      attempts++
-      try {
-        const res = await fetch(`http://localhost:3001/api/v1/audits/${id}`)
-        const body = await res.json()
-        const updated: DomainAudit = body.data
-        setAudit(updated)
-        if (updated.status === 'completed' || updated.status === 'failed') {
-          clearInterval(interval)
-          setPolling(false)
-          refetch()
-        }
-        if (attempts >= maxAttempts) {
-          clearInterval(interval)
-          setPolling(false)
-        }
-      } catch (err) {
-        console.error('Polling error:', err)
-      }
-    }, 8000)
-  }
-
   const scores = [
-    { label: 'Score Geral', value: audit?.scores.overall },
-    { label: 'SEO', value: audit?.scores.seo },
-    { label: 'AEO', value: audit?.scores.aeo },
-    { label: 'Performance', value: audit?.scores.performance },
+    { label: 'Score Geral', value: currentAudit?.scores?.overall },
+    { label: 'SEO', value: currentAudit?.scores?.seo },
+    { label: 'AEO', value: currentAudit?.scores?.aeo },
+    { label: 'Performance', value: currentAudit?.scores?.performance },
   ]
 
   return (
@@ -83,10 +79,10 @@ export default function Home() {
             />
             <button
               onClick={handleSubmit}
-              disabled={isPending || !url || polling}
+              disabled={isPending || !url || isGlobalPolling}
               className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
             >
-              {isPending || polling ? 'Auditando...' : 'Auditar'}
+              {isPending || isGlobalPolling ? 'Auditando...' : 'Auditar'}
             </button>
           </div>
           {error && <p className="text-red-400 text-sm mt-2">{error.message}</p>}
@@ -97,30 +93,30 @@ export default function Home() {
             <div key={card.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5 text-center">
               <p className="text-gray-500 text-sm mb-1">{card.label}</p>
               <p className={`text-4xl font-bold ${card.value !== undefined && card.value > 0 ? ScoreColor(card.value) : 'text-gray-400'}`}>
-                {card.value !== undefined ? card.value : '--'}
+                {card.value !== undefined && card.value > 0 ? card.value : '--'}
               </p>
             </div>
           ))}
         </div>
 
-        {audit ? (
+        {currentAudit ? (
           <div className="mb-8">
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-              <h3 className={`font-semibold mb-3 ${audit.status === 'completed' ? 'text-green-400' : audit.status === 'failed' ? 'text-red-400' : 'text-yellow-400'}`}>
-                {audit.status === 'completed' ? '✅ Auditoria concluída' : audit.status === 'failed' ? '❌ Auditoria falhou' : '⏳ Auditando...'}
+              <h3 className={`font-semibold mb-3 ${currentAudit.status === 'completed' ? 'text-green-400' : currentAudit.status === 'failed' ? 'text-red-400' : 'text-yellow-400'}`}>
+                {currentAudit.status === 'completed' ? '✅ Auditoria concluída' : currentAudit.status === 'failed' ? '❌ Auditoria falhou' : '⏳ Auditando...'}
               </h3>
               <div className="text-sm text-gray-400 space-y-1">
-                <p><span className="text-gray-300">Domínio:</span> {audit.domain}</p>
-                <p><span className="text-gray-300">Status:</span> {audit.status}</p>
-                <p><span className="text-gray-300">Criado em:</span> {new Date(audit.createdAt).toLocaleString('pt-BR')}</p>
+                <p><span className="text-gray-300">Domínio:</span> {currentAudit.domain}</p>
+                <p><span className="text-gray-300">Status:</span> {currentAudit.status}</p>
+                <p><span className="text-gray-300">Criado em:</span> {formatDate(currentAudit.createdAt)}</p>
               </div>
             </div>
 
-            {audit.recommendations && audit.recommendations.length > 0 && (
+            {currentAudit.recommendations && currentAudit.recommendations.length > 0 && (
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mt-4">
                 <h3 className="font-semibold mb-4 text-blue-400">🤖 Recomendações da IA</h3>
                 <ul className="space-y-3">
-                  {audit.recommendations.map((rec, i) => (
+                  {currentAudit.recommendations.map((rec, i) => (
                     <li key={i} className="flex gap-3 text-sm text-gray-300">
                       <span className="text-blue-400 font-bold shrink-0">{i + 1}.</span>
                       <span>{rec}</span>
@@ -136,7 +132,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Histórico */}
         {history && history.length > 0 && (
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4">Histórico de Auditorias</h2>
@@ -144,16 +139,16 @@ export default function Home() {
               {history.map((item) => (
                 <div
                   key={item.id}
-                  onClick={() => setAudit(item)}
-                  className="flex items-center justify-between p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors"
+                  onClick={() => setSelectedAuditId(item.id)}
+                  className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${item.id === currentAudit?.id ? 'bg-gray-700 border border-blue-500' : 'bg-gray-800 hover:bg-gray-700'}`}
                 >
                   <div>
                     <p className="text-sm text-white">{item.domain}</p>
                     <p className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleString('pt-BR')}</p>
                   </div>
                   <div className="flex gap-4 text-sm">
-                    <span className={item.scores.overall > 0 ? ScoreColor(item.scores.overall) : 'text-gray-500'}>
-                      {item.scores.overall > 0 ? item.scores.overall : '--'}
+                    <span className={item.scores?.overall > 0 ? ScoreColor(item.scores.overall) : 'text-gray-500'}>
+                      {item.scores?.overall > 0 ? item.scores.overall : '--'}
                     </span>
                     <span className={`text-xs px-2 py-1 rounded ${item.status === 'completed' ? 'bg-green-900 text-green-400' : item.status === 'failed' ? 'bg-red-900 text-red-400' : 'bg-yellow-900 text-yellow-400'}`}>
                       {item.status}

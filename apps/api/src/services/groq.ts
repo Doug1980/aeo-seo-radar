@@ -1,5 +1,9 @@
 import type { AuditScores } from '@aeo-seo-radar/shared'
 
+interface GroqResponse {
+  choices: { message: { content: string } }[]
+}
+
 export async function generateRecommendations(
   domain: string,
   scores: AuditScores
@@ -33,11 +37,11 @@ Retorne APENAS um array JSON com 5 strings, sem explicações extras. Exemplo:
   })
 
   if (!res.ok) {
-    const err = await res.json()
+    const err = await res.json() as Record<string, unknown>
     throw new Error(`Groq API error: ${res.status} - ${JSON.stringify(err)}`)
   }
 
-  const data = await res.json()
+  const data = await res.json() as GroqResponse
   const text = data.choices?.[0]?.message?.content ?? '[]'
   const clean = text.replace(/```json|```/g, '').trim()
   return JSON.parse(clean)

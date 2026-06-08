@@ -30,9 +30,9 @@ export function useAuditById(
 
      
 
-      const isDone =
-        (data.status === 'completed' && data.recommendations?.length > 0) ||
-        data.status === 'failed'
+     const isDone =
+      (data.status === 'completed' && (data.recommendations?.length ?? 0) > 0) ||
+      data.status === 'failed'
 
   
 

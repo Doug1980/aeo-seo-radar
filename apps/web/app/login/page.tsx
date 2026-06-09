@@ -2,6 +2,9 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import { FaGithub } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
+import { MdEmail } from "react-icons/md";
 import { Toaster, toast } from "sonner";
 
 export default function LoginPage() {
@@ -18,16 +21,18 @@ export default function LoginPage() {
 					<button
 						type="button"
 						onClick={() => signIn("google", { callbackUrl: "/" })}
-						className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 hover:bg-gray-100 font-medium py-2.5 rounded-lg transition-colors"
+						className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 hover:bg-gray-100 font-medium py-2.5 rounded-lg transition-colors cursor-pointer"
 					>
+						<FcGoogle size={20} />
 						Entrar com Google
 					</button>
 
 					<button
 						type="button"
 						onClick={() => signIn("github", { callbackUrl: "/" })}
-						className="w-full flex items-center justify-center gap-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 font-medium py-2.5 rounded-lg transition-colors"
+						className="w-full flex items-center justify-center gap-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 font-medium py-2.5 rounded-lg transition-colors cursor-pointer"
 					>
+						<FaGithub size={20} />
 						Entrar com GitHub
 					</button>
 				</div>
@@ -37,9 +42,10 @@ export default function LoginPage() {
 						<button
 							type="button"
 							onClick={() => setShowEmailForm(true)}
-							className="w-full text-gray-400 hover:text-white text-sm py-2 transition-colors"
+							className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 hover:text-white font-medium py-2.5 rounded-lg transition-colors cursor-pointer"
 						>
-							Entrar com seu melhor e-mail →
+							<MdEmail size={20} />
+							Entrar com seu melhor e-mail
 						</button>
 					) : (
 						<EmailForm onCancel={() => setShowEmailForm(false)} />
@@ -94,7 +100,7 @@ function EmailForm({ onCancel }: { onCancel: () => void }) {
 				<button
 					type="submit"
 					disabled={loading}
-					className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2 rounded-lg font-medium transition-colors"
+					className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2 rounded-lg font-medium transition-colors cursor-pointer"
 				>
 					{loading ? "Enviando..." : "✨ Enviar link mágico"}
 				</button>
@@ -102,7 +108,7 @@ function EmailForm({ onCancel }: { onCancel: () => void }) {
 			<button
 				type="button"
 				onClick={onCancel}
-				className="text-gray-600 hover:text-gray-400 text-xs transition-colors"
+				className="text-gray-600 hover:text-gray-400 text-xs transition-colors cursor-pointer"
 			>
 				Voltar
 			</button>

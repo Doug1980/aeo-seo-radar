@@ -2,10 +2,14 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import { Toaster, toast } from "sonner";
 
 export default function LoginPage() {
+	const [showEmailForm, setShowEmailForm] = useState(false);
+
 	return (
 		<main className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
+			<Toaster position="top-center" theme="dark" richColors />
 			<div className="bg-gray-900 border border-gray-800 rounded-xl p-10 w-full max-w-md text-center">
 				<h1 className="text-2xl font-bold mb-2">AEO & SEO Radar 📡</h1>
 				<p className="text-gray-400 mb-8">Entre para acessar o dashboard</p>
@@ -29,48 +33,79 @@ export default function LoginPage() {
 				</div>
 
 				<div className="mt-6 pt-6 border-t border-gray-800">
-					<p className="text-gray-500 text-sm mb-3">Ou entre com email</p>
-					<EmailForm />
+					{!showEmailForm ? (
+						<button
+							type="button"
+							onClick={() => setShowEmailForm(true)}
+							className="w-full text-gray-400 hover:text-white text-sm py-2 transition-colors"
+						>
+							Entrar com seu melhor e-mail →
+						</button>
+					) : (
+						<EmailForm onCancel={() => setShowEmailForm(false)} />
+					)}
 				</div>
 			</div>
 		</main>
 	);
 }
 
-function EmailForm() {
+function EmailForm({ onCancel }: { onCancel: () => void }) {
 	const [email, setEmail] = useState("");
-	const [sent, setSent] = useState(false);
+	const [loading, setLoading] = useState(false);
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		await signIn("resend", { email, callbackUrl: "/", redirect: false });
-		setSent(true);
-	}
+		setLoading(true);
 
-	if (sent) {
-		return (
-			<p className="text-green-400 text-sm">
-				✅ Link enviado! Verifique seu email.
-			</p>
-		);
+		try {
+			const result = await signIn("resend", {
+				email,
+				callbackUrl: "/",
+				redirect: false,
+			});
+
+			if (result?.error) {
+				toast.error("Erro ao enviar o link. Tente novamente.");
+			} else {
+				toast.success("Link mágico enviado! Verifique seu email.");
+			}
+		} catch {
+			toast.error("Algo deu errado. Tente novamente.");
+		} finally {
+			setLoading(false);
+		}
 	}
 
 	return (
-		<form onSubmit={handleSubmit} className="flex flex-col gap-2">
-			<input
-				type="email"
-				value={email}
-				onChange={(e) => setEmail(e.target.value)}
-				placeholder="seu@email.com"
-				required
-				className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-			/>
+		<div className="space-y-3">
+			<p className="text-gray-500 text-sm mb-3">
+				Digite seu email para receber o link
+			</p>
+			<form onSubmit={handleSubmit} className="flex flex-col gap-2">
+				<input
+					type="email"
+					value={email}
+					onChange={(e) => setEmail(e.target.value)}
+					placeholder="seu@email.com"
+					required
+					className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+				/>
+				<button
+					type="submit"
+					disabled={loading}
+					className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2 rounded-lg font-medium transition-colors"
+				>
+					{loading ? "Enviando..." : "✨ Enviar link mágico"}
+				</button>
+			</form>
 			<button
-				type="submit"
-				className="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium transition-colors"
+				type="button"
+				onClick={onCancel}
+				className="text-gray-600 hover:text-gray-400 text-xs transition-colors"
 			>
-				Enviar magic link
+				Voltar
 			</button>
-		</form>
+		</div>
 	);
 }

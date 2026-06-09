@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAuditFlow } from './hooks/useAuditFlow'
+import UserMenu from './components/UserMenu'
 
 function ScoreColor(score: number) {
   if (score >= 90) return 'text-green-400'
@@ -42,18 +43,22 @@ export default function Home() {
   ]
 
   return (
+    
     <main className="min-h-screen bg-gray-950 text-white p-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-10">
+    <div className="max-w-5xl mx-auto">
+      <div className="mb-10 flex items-center justify-between">
+        <div>
           <h1 className="text-3xl font-bold text-white">AEO & SEO Radar 📡</h1>
           <p className="text-gray-400 mt-1">Monitoramento e auditoria de presença digital</p>
         </div>
+        <UserMenu />
+      </div>
 
-        <div className="bg-gray-900 rounded-xl p-6 mb-8 border border-gray-800">
-          <h2 className="text-lg font-semibold mb-4">Nova Auditoria</h2>
-          <div className="flex gap-3">
-            <input
-              type="url"
+      <div className="bg-gray-900 rounded-xl p-6 mb-8 border border-gray-800">
+        <h2 className="text-lg font-semibold mb-4">Nova Auditoria</h2>
+        <div className="flex gap-3">
+          <input
+            type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://seusite.com.br"

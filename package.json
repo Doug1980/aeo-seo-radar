@@ -15,8 +15,9 @@
     "clean": "turbo run clean"
   },
   "devDependencies": {
-    "turbo": "^2.0.0",
+    "@biomejs/biome": "^2.4.16",
     "prettier": "^3.3.0",
+    "turbo": "^2.0.0",
     "typescript": "^5.5.0"
   },
   "engines": {

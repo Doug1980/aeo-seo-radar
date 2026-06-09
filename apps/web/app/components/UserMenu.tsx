@@ -15,7 +15,7 @@ export default function UserMenu() {
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen(!open)     }
         className="flex items-center gap-2 hover:opacity-80 transition-opacity"
       >
         {image ? (
@@ -45,9 +45,9 @@ export default function UserMenu() {
               <p className="text-xs text-gray-500 truncate">{email}</p>
             </div>
             <button
-              onClick={() => signOut({ callbackUrl: '/login' })}
-              className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-800 rounded-lg mt-1 transition-colors"
-            >
+                onClick={() => setOpen(!open)}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+              >
               Sair
             </button>
           </div>

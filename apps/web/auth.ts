@@ -4,7 +4,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
-import Resend from "next-auth/providers/resend";
+import Nodemailer from "next-auth/providers/nodemailer";
 import * as schema from "./db/schema";
 
 function getDb() {
@@ -23,9 +23,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 			clientId: process.env.AUTH_GITHUB_ID!,
 			clientSecret: process.env.AUTH_GITHUB_SECRET!,
 		}),
-		Resend({
-			apiKey: process.env.AUTH_RESEND_KEY!,
-			from: "noreply@resend.dev",
+		Nodemailer({
+			server: {
+				host: "smtp-relay.brevo.com",
+				port: 587,
+				auth: {
+					user: process.env.BREVO_SMTP_USER!,
+					pass: process.env.BREVO_SMTP_KEY!,
+				},
+			},
+			from: process.env.AUTH_EMAIL_FROM!,
 		}),
 	],
 	pages: {

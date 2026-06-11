@@ -65,7 +65,7 @@ function EmailForm({ onCancel }: { onCancel: () => void }) {
 		setLoading(true);
 
 		try {
-			const result = await signIn("resend", {
+			const result = await signIn("nodemailer", {
 				email,
 				callbackUrl: "/",
 				redirect: false,

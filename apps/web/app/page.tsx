@@ -10,6 +10,24 @@ function ScoreColor(score: number) {
 	return "text-red-400";
 }
 
+function isPageSpeedUnavailable(scores?: { seo: number; performance: number }) {
+	// Um site real não tira 0 em performance E seo ao mesmo tempo.
+	// Esse padrão indica que o PageSpeed falhou (timeout/erro).
+	return !!scores && scores.performance === 0 && scores.seo === 0;
+}
+
+// Gera um aviso informativo sobre o score de AEO (dados estruturados / schema markup).
+// Diferente da falha de PageSpeed (que é erro), aqui o score é um RESULTADO real:
+// AEO baixo significa que o site tem pouco ou nenhum schema markup detectável.
+function aeoHint(aeo?: number) {
+	if (aeo === undefined) return null;
+	if (aeo === 0)
+		return "A pontuação de AEO é zero porque nenhum dado estruturado (schema markup) foi detectado neste site — o que reduz sua visibilidade em motores de resposta e ferramentas de IA.";
+	if (aeo < 50)
+		return "Schema markup parcial ou incompleto. Ampliar os dados estruturados melhora a presença em AEO.";
+	return null; // score bom, sem aviso
+}
+
 function formatDate(iso: string) {
 	return new Intl.DateTimeFormat("pt-BR", {
 		year: "numeric",
@@ -81,26 +99,45 @@ export default function Home() {
 				</div>
 
 				<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-					{scores.map((card) => (
-						<div
-							key={card.label}
-							className="bg-gray-900 border border-gray-800 rounded-xl p-5 text-center"
-						>
-							<p className="text-gray-500 text-sm mb-1">{card.label}</p>
-							{isPolling ? (
-								// Skeleton animado enquanto a auditoria está rodando
-								<div className="h-10 w-16 mx-auto rounded-lg bg-gray-700 animate-pulse" />
-							) : (
-								<p
-									className={`text-4xl font-bold ${card.value !== undefined && card.value > 0 ? ScoreColor(card.value) : "text-gray-400"}`}
-								>
-									{card.value !== undefined && card.value > 0
-										? card.value
-										: "--"}
-								</p>
-							)}
-						</div>
-					))}
+					{scores.map((card) => {
+						const psDown = isPageSpeedUnavailable(currentAudit?.scores);
+						// SEO, Performance e Score Geral dependem do PageSpeed
+						const dependsOnPageSpeed = [
+							"SEO",
+							"Performance",
+							"Score Geral",
+						].includes(card.label);
+						const showNA = psDown && dependsOnPageSpeed;
+
+						return (
+							<div
+								key={card.label}
+								className="bg-gray-900 border border-gray-800 rounded-xl p-5 text-center"
+							>
+								<p className="text-gray-500 text-sm mb-1">{card.label}</p>
+								{isPolling ? (
+									// Skeleton animado enquanto a auditoria está rodando
+									<div className="h-10 w-16 mx-auto rounded-lg bg-gray-700 animate-pulse" />
+								) : showNA ? (
+									// PageSpeed indisponível: mostra N/D (não medido), não um score falso
+									<p
+										className="text-2xl font-bold text-gray-500"
+										title="Não foi possível medir — PageSpeed indisponível para este site"
+									>
+										N/D
+									</p>
+								) : (
+									// Mostra o valor real (inclusive 0, que é um resultado válido).
+									// Só vira "--" quando o dado é undefined (ainda não carregado).
+									<p
+										className={`text-4xl font-bold ${card.value !== undefined ? ScoreColor(card.value) : "text-gray-400"}`}
+									>
+										{card.value !== undefined ? card.value : "--"}
+									</p>
+								)}
+							</div>
+						);
+					})}
 				</div>
 
 				{currentAudit ? (
@@ -110,7 +147,9 @@ export default function Home() {
 								className={`font-semibold mb-3 ${currentAudit.status === "completed" ? "text-green-400" : currentAudit.status === "failed" ? "text-red-400" : "text-yellow-400"}`}
 							>
 								{currentAudit.status === "completed"
-									? "✅ Auditoria concluída"
+									? isPageSpeedUnavailable(currentAudit.scores)
+										? "⚠️ Auditoria concluída parcialmente"
+										: "✅ Auditoria concluída"
 									: currentAudit.status === "failed"
 										? "❌ Auditoria falhou"
 										: "⏳ Auditando..."}
@@ -129,6 +168,27 @@ export default function Home() {
 									{formatDate(currentAudit.createdAt)}
 								</p>
 							</div>
+
+							{/* Aviso ÂMBAR: falha de medição (PageSpeed indisponível) */}
+							{currentAudit.status === "completed" &&
+								isPageSpeedUnavailable(currentAudit.scores) && (
+									<div className="mt-4 bg-amber-950/40 border border-amber-800/50 rounded-lg p-3 text-sm text-amber-300">
+										A análise de performance e SEO técnico (PageSpeed) não pôde
+										ser concluída para este site — provavelmente por ser muito
+										grande ou lento. As métricas de AEO e as recomendações
+										abaixo seguem válidas.
+									</div>
+								)}
+
+							{/* Aviso AZUL: informativo sobre o resultado de AEO (não é erro).
+							    Só aparece quando o PageSpeed funcionou, pra não competir com o aviso âmbar. */}
+							{currentAudit.status === "completed" &&
+								!isPageSpeedUnavailable(currentAudit.scores) &&
+								aeoHint(currentAudit.scores?.aeo) && (
+									<div className="mt-4 bg-blue-950/40 border border-blue-800/50 rounded-lg p-3 text-sm text-blue-300">
+										{aeoHint(currentAudit.scores?.aeo)}
+									</div>
+								)}
 						</div>
 
 						{isPolling && (
@@ -194,14 +254,21 @@ export default function Home() {
 										</p>
 									</div>
 									<div className="flex gap-4 text-sm">
+										{/* Histórico: N/D quando PageSpeed falhou; senão o score real (inclusive 0) */}
 										<span
 											className={
-												item.scores?.overall > 0
-													? ScoreColor(item.scores.overall)
-													: "text-gray-500"
+												isPageSpeedUnavailable(item.scores)
+													? "text-gray-500"
+													: item.scores?.overall !== undefined
+														? ScoreColor(item.scores.overall)
+														: "text-gray-500"
 											}
 										>
-											{item.scores?.overall > 0 ? item.scores.overall : "--"}
+											{isPageSpeedUnavailable(item.scores)
+												? "N/D"
+												: item.scores?.overall !== undefined
+													? item.scores.overall
+													: "--"}
 										</span>
 										<span
 											className={`text-xs px-2 py-1 rounded ${item.status === "completed" ? "bg-green-900 text-green-400" : item.status === "failed" ? "bg-red-900 text-red-400" : "bg-yellow-900 text-yellow-400"}`}

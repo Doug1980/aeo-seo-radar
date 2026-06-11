@@ -1,12 +1,13 @@
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
-import * as schema from './schema.js'
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import * as schema from "./schema.js";
 
-const client = postgres({
-  host: 'localhost',
-  port: 5433,
-  database: 'aeo_seo_radar',
-  username: 'radar',
-})
+const connectionString = process.env["DATABASE_URL"];
 
-export const db = drizzle(client, { schema })
+if (!connectionString) {
+	throw new Error("DATABASE_URL não está definida");
+}
+
+const client = postgres(connectionString);
+
+export const db = drizzle(client, { schema });

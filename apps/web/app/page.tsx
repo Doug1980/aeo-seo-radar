@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import UserMenu from "./components/UserMenu";
 import { useAuditFlow } from "./hooks/useAuditFlow";
 
@@ -11,21 +12,16 @@ function ScoreColor(score: number) {
 }
 
 function isPageSpeedUnavailable(scores?: { seo: number; performance: number }) {
-	// Um site real não tira 0 em performance E seo ao mesmo tempo.
-	// Esse padrão indica que o PageSpeed falhou (timeout/erro).
 	return !!scores && scores.performance === 0 && scores.seo === 0;
 }
 
-// Gera um aviso informativo sobre o score de AEO (dados estruturados / schema markup).
-// Diferente da falha de PageSpeed (que é erro), aqui o score é um RESULTADO real:
-// AEO baixo significa que o site tem pouco ou nenhum schema markup detectável.
 function aeoHint(aeo?: number) {
 	if (aeo === undefined) return null;
 	if (aeo === 0)
 		return "A pontuação de AEO é zero porque nenhum dado estruturado (schema markup) foi detectado neste site — o que reduz sua visibilidade em motores de resposta e ferramentas de IA.";
 	if (aeo < 50)
 		return "Schema markup parcial ou incompleto. Ampliar os dados estruturados melhora a presença em AEO.";
-	return null; // score bom, sem aviso
+	return null;
 }
 
 function formatDate(iso: string) {
@@ -37,6 +33,33 @@ function formatDate(iso: string) {
 		minute: "2-digit",
 		timeZone: "UTC",
 	}).format(new Date(iso));
+}
+
+function AnimatedScore({ value }: { value: number }) {
+	const [display, setDisplay] = useState(0);
+
+	useEffect(() => {
+		if (value === 0) {
+			setDisplay(0);
+			return;
+		}
+		let start = 0;
+		const duration = 800;
+		const step = 16;
+		const increment = value / (duration / step);
+		const timer = setInterval(() => {
+			start += increment;
+			if (start >= value) {
+				setDisplay(value);
+				clearInterval(timer);
+			} else {
+				setDisplay(Math.floor(start));
+			}
+		}, step);
+		return () => clearInterval(timer);
+	}, [value]);
+
+	return <>{display}</>;
 }
 
 export default function Home() {
@@ -61,41 +84,47 @@ export default function Home() {
 	];
 
 	return (
-		<main
-			style={{
-				minHeight: "100dvh",
-				background:
-					"linear-gradient(135deg, #030712 0%, #111827 50%, #0c1a3d 100%)",
-			}}
-			className="text-white flex items-center justify-center px-4 py-12"
-		>
+		<main className="min-h-screen bg-gray-950 text-white px-4 py-6 md:p-8">
 			<div className="max-w-5xl mx-auto">
-				<div className="mb-10 flex items-center justify-between">
+				{/* Header */}
+				<motion.div
+					className="mb-8 flex items-center justify-between"
+					initial={{ opacity: 0, y: -20 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ duration: 0.4 }}
+				>
 					<div>
-						<h1 className="text-3xl font-bold text-white">
+						<h1 className="text-2xl md:text-3xl font-bold text-white">
 							AEO & SEO Radar 📡
 						</h1>
-						<p className="text-gray-400 mt-1">
+						<p className="text-gray-400 mt-1 text-sm md:text-base">
 							Monitoramento e auditoria de presença digital
 						</p>
 					</div>
 					<UserMenu />
-				</div>
+				</motion.div>
 
-				<div className="bg-gray-900 rounded-xl p-6 mb-8 border border-gray-800">
-					<h2 className="text-lg font-semibold mb-4">Nova Auditoria</h2>
-					<div className="flex gap-3">
+				{/* Nova Auditoria */}
+				<motion.div
+					className="bg-gray-900 rounded-xl p-4 md:p-6 mb-6 border border-gray-800"
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ duration: 0.4, delay: 0.1 }}
+				>
+					<h2 className="text-lg font-semibold mb-3">Nova Auditoria</h2>
+					<div className="flex flex-col sm:flex-row gap-3">
 						<input
 							type="url"
 							value={url}
 							onChange={(e) => setUrl(e.target.value)}
 							placeholder="https://seusite.com.br"
-							className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+							className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
 						/>
 						<button
+							type="button"
 							onClick={() => startAudit(url)}
 							disabled={isPending || !url || isPolling}
-							className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
+							className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap"
 						>
 							{isPending || isPolling ? "Auditando..." : "Auditar"}
 						</button>
@@ -103,12 +132,12 @@ export default function Home() {
 					{error && (
 						<p className="text-red-400 text-sm mt-2">{error.message}</p>
 					)}
-				</div>
+				</motion.div>
 
-				<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-					{scores.map((card) => {
+				{/* Cards de Score */}
+				<div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+					{scores.map((card, index) => {
 						const psDown = isPageSpeedUnavailable(currentAudit?.scores);
-						// SEO, Performance e Score Geral dependem do PageSpeed
 						const dependsOnPageSpeed = [
 							"SEO",
 							"Performance",
@@ -117,177 +146,223 @@ export default function Home() {
 						const showNA = psDown && dependsOnPageSpeed;
 
 						return (
-							<div
+							<motion.div
 								key={card.label}
-								className="bg-gray-900 border border-gray-800 rounded-xl p-5 text-center"
+								className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center"
+								initial={{ opacity: 0, scale: 0.9 }}
+								animate={{ opacity: 1, scale: 1 }}
+								transition={{ duration: 0.3, delay: 0.2 + index * 0.07 }}
 							>
-								<p className="text-gray-500 text-sm mb-1">{card.label}</p>
+								<p className="text-gray-500 text-xs mb-1">{card.label}</p>
 								{isPolling ? (
-									// Skeleton animado enquanto a auditoria está rodando
-									<div className="h-10 w-16 mx-auto rounded-lg bg-gray-700 animate-pulse" />
+									<div className="h-8 w-14 mx-auto rounded-lg bg-gray-700 animate-pulse" />
 								) : showNA ? (
-									// PageSpeed indisponível: mostra N/D (não medido), não um score falso
 									<p
-										className="text-2xl font-bold text-gray-500"
-										title="Não foi possível medir — PageSpeed indisponível para este site"
+										className="text-xl font-bold text-gray-500"
+										title="Não foi possível medir"
 									>
 										N/D
 									</p>
 								) : (
-									// Mostra o valor real (inclusive 0, que é um resultado válido).
-									// Só vira "--" quando o dado é undefined (ainda não carregado).
 									<p
-										className={`text-4xl font-bold ${card.value !== undefined ? ScoreColor(card.value) : "text-gray-400"}`}
+										className={`text-3xl md:text-4xl font-bold ${card.value !== undefined ? ScoreColor(card.value) : "text-gray-400"}`}
 									>
-										{card.value !== undefined ? card.value : "--"}
+										{card.value !== undefined ? (
+											<AnimatedScore value={card.value} />
+										) : (
+											"--"
+										)}
 									</p>
 								)}
-							</div>
+							</motion.div>
 						);
 					})}
 				</div>
 
-				{currentAudit ? (
-					<div className="mb-8">
-						<div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-							<h3
-								className={`font-semibold mb-3 ${currentAudit.status === "completed" ? "text-green-400" : currentAudit.status === "failed" ? "text-red-400" : "text-yellow-400"}`}
-							>
-								{currentAudit.status === "completed"
-									? isPageSpeedUnavailable(currentAudit.scores)
-										? "⚠️ Auditoria concluída parcialmente"
-										: "✅ Auditoria concluída"
-									: currentAudit.status === "failed"
-										? "❌ Auditoria falhou"
-										: "⏳ Auditando..."}
-							</h3>
-							<div className="text-sm text-gray-400 space-y-1">
-								<p>
-									<span className="text-gray-300">Domínio:</span>{" "}
-									{currentAudit.domain}
-								</p>
-								<p>
-									<span className="text-gray-300">Status:</span>{" "}
-									{currentAudit.status}
-								</p>
-								<p>
-									<span className="text-gray-300">Criado em:</span>{" "}
-									{formatDate(currentAudit.createdAt)}
-								</p>
-							</div>
-
-							{/* Aviso ÂMBAR: falha de medição (PageSpeed indisponível) */}
-							{currentAudit.status === "completed" &&
-								isPageSpeedUnavailable(currentAudit.scores) && (
-									<div className="mt-4 bg-amber-950/40 border border-amber-800/50 rounded-lg p-3 text-sm text-amber-300">
-										A análise de performance e SEO técnico (PageSpeed) não pôde
-										ser concluída para este site — provavelmente por ser muito
-										grande ou lento. As métricas de AEO e as recomendações
-										abaixo seguem válidas.
-									</div>
-								)}
-
-							{/* Aviso AZUL: informativo sobre o resultado de AEO (não é erro).
-							    Só aparece quando o PageSpeed funcionou, pra não competir com o aviso âmbar. */}
-							{currentAudit.status === "completed" &&
-								!isPageSpeedUnavailable(currentAudit.scores) &&
-								aeoHint(currentAudit.scores?.aeo) && (
-									<div className="mt-4 bg-blue-950/40 border border-blue-800/50 rounded-lg p-3 text-sm text-blue-300">
-										{aeoHint(currentAudit.scores?.aeo)}
-									</div>
-								)}
-						</div>
-
-						{isPolling && (
-							// Skeleton das recommendations enquanto aguarda
-							<div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mt-4">
-								<div className="h-4 w-48 rounded bg-gray-700 animate-pulse mb-4" />
-								<div className="space-y-3">
-									{[1, 2, 3, 4, 5].map((i) => (
-										<div
-											key={i}
-											className="h-3 rounded bg-gray-700 animate-pulse"
-											style={{ width: `${70 + i * 5}%` }}
-										/>
-									))}
+				{/* Status da Auditoria */}
+				<AnimatePresence mode="wait">
+					{currentAudit ? (
+						<motion.div
+							key="audit-result"
+							className="mb-6"
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							exit={{ opacity: 0, y: -20 }}
+							transition={{ duration: 0.4 }}
+						>
+							<div className="bg-gray-900 border border-gray-800 rounded-xl p-4 md:p-6">
+								<h3
+									className={`font-semibold mb-3 ${currentAudit.status === "completed" ? "text-green-400" : currentAudit.status === "failed" ? "text-red-400" : "text-yellow-400"}`}
+								>
+									{currentAudit.status === "completed"
+										? isPageSpeedUnavailable(currentAudit.scores)
+											? "⚠️ Auditoria concluída parcialmente"
+											: "✅ Auditoria concluída"
+										: currentAudit.status === "failed"
+											? "❌ Auditoria falhou"
+											: "⏳ Auditando..."}
+								</h3>
+								<div className="text-sm text-gray-400 space-y-1">
+									<p>
+										<span className="text-gray-300">Domínio:</span>{" "}
+										<span className="break-all">{currentAudit.domain}</span>
+									</p>
+									<p>
+										<span className="text-gray-300">Status:</span>{" "}
+										{currentAudit.status}
+									</p>
+									<p>
+										<span className="text-gray-300">Criado em:</span>{" "}
+										{formatDate(currentAudit.createdAt)}
+									</p>
 								</div>
-							</div>
-						)}
 
-						{!isPolling &&
-							currentAudit.recommendations &&
-							currentAudit.recommendations.length > 0 && (
-								<div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mt-4">
-									<h3 className="font-semibold mb-4 text-blue-400">
-										🤖 Recomendações da IA
-									</h3>
-									<ul className="space-y-3">
-										{currentAudit.recommendations.map((rec, i) => (
-											<li key={i} className="flex gap-3 text-sm text-gray-300">
-												<span className="text-blue-400 font-bold shrink-0">
-													{i + 1}.
-												</span>
-												<span>{rec}</span>
-											</li>
+								{currentAudit.status === "completed" &&
+									isPageSpeedUnavailable(currentAudit.scores) && (
+										<motion.div
+											className="mt-4 bg-amber-950/40 border border-amber-800/50 rounded-lg p-3 text-sm text-amber-300"
+											initial={{ opacity: 0 }}
+											animate={{ opacity: 1 }}
+											transition={{ delay: 0.3 }}
+										>
+											A análise de performance e SEO técnico (PageSpeed) não
+											pôde ser concluída para este site — provavelmente por ser
+											muito grande ou lento. As métricas de AEO e as
+											recomendações abaixo seguem válidas.
+										</motion.div>
+									)}
+
+								{currentAudit.status === "completed" &&
+									!isPageSpeedUnavailable(currentAudit.scores) &&
+									aeoHint(currentAudit.scores?.aeo) && (
+										<motion.div
+											className="mt-4 bg-blue-950/40 border border-blue-800/50 rounded-lg p-3 text-sm text-blue-300"
+											initial={{ opacity: 0 }}
+											animate={{ opacity: 1 }}
+											transition={{ delay: 0.3 }}
+										>
+											{aeoHint(currentAudit.scores?.aeo)}
+										</motion.div>
+									)}
+							</div>
+
+							{isPolling && (
+								<div className="bg-gray-900 border border-gray-800 rounded-xl p-4 md:p-6 mt-4">
+									<div className="h-4 w-48 rounded bg-gray-700 animate-pulse mb-4" />
+									<div className="space-y-3">
+										{[1, 2, 3, 4, 5].map((i) => (
+											<div
+												key={i}
+												className="h-3 rounded bg-gray-700 animate-pulse"
+												style={{ width: `${70 + i * 5}%` }}
+											/>
 										))}
-									</ul>
+									</div>
 								</div>
 							)}
-					</div>
-				) : (
-					<div className="bg-gray-900 border border-gray-800 rounded-xl p-12 text-center mb-8">
-						<p className="text-gray-500 text-lg">
-							Insira uma URL acima para iniciar a auditoria
-						</p>
-					</div>
-				)}
 
-				{history && history.length > 0 && (
-					<div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-						<h2 className="text-lg font-semibold mb-4">
-							Histórico de Auditorias
-						</h2>
-						<div className="space-y-3">
-							{history.map((item) => (
-								<div
-									key={item.id}
-									onClick={() => selectAudit(item.id)}
-									className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${item.id === selectedAuditId ? "bg-gray-700 border border-blue-500" : "bg-gray-800 hover:bg-gray-700"}`}
-								>
-									<div>
-										<p className="text-sm text-white">{item.domain}</p>
-										<p className="text-xs text-gray-500">
-											{formatDate(item.createdAt)}
-										</p>
-									</div>
-									<div className="flex gap-4 text-sm">
-										{/* Histórico: N/D quando PageSpeed falhou; senão o score real (inclusive 0) */}
-										<span
-											className={
-												isPageSpeedUnavailable(item.scores)
-													? "text-gray-500"
+							<AnimatePresence>
+								{!isPolling &&
+									currentAudit.recommendations &&
+									currentAudit.recommendations.length > 0 && (
+										<motion.div
+											className="bg-gray-900 border border-gray-800 rounded-xl p-4 md:p-6 mt-4"
+											initial={{ opacity: 0, y: 20 }}
+											animate={{ opacity: 1, y: 0 }}
+											transition={{ duration: 0.4 }}
+										>
+											<h3 className="font-semibold mb-4 text-blue-400">
+												🤖 Recomendações da IA
+											</h3>
+											<ul className="space-y-3">
+												{currentAudit.recommendations.map((rec, i) => (
+													<motion.li
+														key={i}
+														className="flex gap-3 text-sm text-gray-300"
+														initial={{ opacity: 0, x: -20 }}
+														animate={{ opacity: 1, x: 0 }}
+														transition={{ duration: 0.3, delay: i * 0.1 }}
+													>
+														<span className="text-blue-400 font-bold shrink-0">
+															{i + 1}.
+														</span>
+														<span>{rec}</span>
+													</motion.li>
+												))}
+											</ul>
+										</motion.div>
+									)}
+							</AnimatePresence>
+						</motion.div>
+					) : (
+						<motion.div
+							key="empty-state"
+							className="bg-gray-900 border border-gray-800 rounded-xl p-8 md:p-12 text-center mb-6"
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							transition={{ duration: 0.4, delay: 0.3 }}
+						>
+							<p className="text-gray-500 text-base md:text-lg">
+								Insira uma URL acima para iniciar a auditoria
+							</p>
+						</motion.div>
+					)}
+				</AnimatePresence>
+
+				{/* Histórico */}
+				<AnimatePresence>
+					{history && history.length > 0 && (
+						<motion.div
+							className="bg-gray-900 border border-gray-800 rounded-xl p-4 md:p-6"
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.4, delay: 0.4 }}
+						>
+							<h2 className="text-lg font-semibold mb-4">
+								Histórico de Auditorias
+							</h2>
+							<div className="space-y-3">
+								{history.map((item, index) => (
+									<motion.div
+										key={item.id}
+										onClick={() => selectAudit(item.id)}
+										className={`flex items-center justify-between gap-3 p-3 rounded-lg cursor-pointer transition-colors ${item.id === selectedAuditId ? "bg-gray-700 border border-blue-500" : "bg-gray-800 hover:bg-gray-700"}`}
+										initial={{ opacity: 0, x: -20 }}
+										animate={{ opacity: 1, x: 0 }}
+										transition={{ duration: 0.3, delay: index * 0.05 }}
+										whileHover={{ scale: 1.01 }}
+										whileTap={{ scale: 0.99 }}
+									>
+										<div className="min-w-0 flex-1">
+											<p className="text-sm text-white truncate">
+												{item.domain}
+											</p>
+											<p className="text-xs text-gray-500">
+												{formatDate(item.createdAt)}
+											</p>
+										</div>
+										<div className="flex items-center gap-2 shrink-0">
+											<span
+												className={`text-sm font-medium ${isPageSpeedUnavailable(item.scores) ? "text-gray-500" : item.scores?.overall !== undefined ? ScoreColor(item.scores.overall) : "text-gray-500"}`}
+											>
+												{isPageSpeedUnavailable(item.scores)
+													? "N/D"
 													: item.scores?.overall !== undefined
-														? ScoreColor(item.scores.overall)
-														: "text-gray-500"
-											}
-										>
-											{isPageSpeedUnavailable(item.scores)
-												? "N/D"
-												: item.scores?.overall !== undefined
-													? item.scores.overall
-													: "--"}
-										</span>
-										<span
-											className={`text-xs px-2 py-1 rounded ${item.status === "completed" ? "bg-green-900 text-green-400" : item.status === "failed" ? "bg-red-900 text-red-400" : "bg-yellow-900 text-yellow-400"}`}
-										>
-											{item.status}
-										</span>
-									</div>
-								</div>
-							))}
-						</div>
-					</div>
-				)}
+														? item.scores.overall
+														: "--"}
+											</span>
+											<span
+												className={`text-xs px-2 py-1 rounded whitespace-nowrap ${item.status === "completed" ? "bg-green-900 text-green-400" : item.status === "failed" ? "bg-red-900 text-red-400" : "bg-yellow-900 text-yellow-400"}`}
+											>
+												{item.status}
+											</span>
+										</div>
+									</motion.div>
+								))}
+							</div>
+						</motion.div>
+					)}
+				</AnimatePresence>
 			</div>
 		</main>
 	);

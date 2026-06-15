@@ -1,6 +1,6 @@
 import type { ApiResponse, DomainAudit } from "@aeo-seo-radar/shared";
 import { zValidator } from "@hono/zod-validator";
-import { and, desc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { db } from "../db/index.js";
@@ -9,6 +9,9 @@ import { startBackgroundAudit } from "../services/auditService.js";
 
 export const auditRoutes = new Hono();
 
+// ─── Contrato central de resposta ────────────────────────────────────────────
+// Qualquer campo novo adicionado ao tipo DomainAudit deve vir aqui.
+// O TypeScript avisa se algo estiver faltando — o compilador vira o guardião.
 function toAuditResponse(audit: typeof audits.$inferSelect): DomainAudit {
 	return {
 		id: audit.id,
@@ -27,6 +30,7 @@ function toAuditResponse(audit: typeof audits.$inferSelect): DomainAudit {
 	};
 }
 
+// ─── Schemas de validação ─────────────────────────────────────────────────────
 const createAuditSchema = z.object({
 	domain: z.string().url({ message: "Informe uma URL válida" }),
 });
@@ -34,13 +38,11 @@ const createAuditSchema = z.object({
 // ─── POST / — Cria uma nova auditoria ────────────────────────────────────────
 auditRoutes.post("/", zValidator("json", createAuditSchema), async (c) => {
 	const { domain } = c.req.valid("json");
-	const userId = c.req.header("x-user-id") ?? null;
 
 	const [audit] = await db
 		.insert(audits)
 		.values({
 			domain,
-			userId,
 			status: "pending",
 			scores: { overall: 0, seo: 0, aeo: 0, performance: 0, schemaMarkup: 0 },
 		})
@@ -55,6 +57,7 @@ auditRoutes.post("/", zValidator("json", createAuditSchema), async (c) => {
 		.set({ status: "running" })
 		.where(eq(audits.id, audit.id));
 
+	// Dispara em background sem bloquear a resposta
 	startBackgroundAudit(audit.id, domain);
 
 	const response: ApiResponse<DomainAudit> = {
@@ -64,20 +67,12 @@ auditRoutes.post("/", zValidator("json", createAuditSchema), async (c) => {
 	return c.json(response, 201);
 });
 
-// ─── GET / — Lista auditorias do usuário ─────────────────────────────────────
+// ─── GET / — Lista as auditorias recentes ────────────────────────────────────
 auditRoutes.get("/", async (c) => {
-	const userId = c.req.header("x-user-id") ?? null;
-
-	const allAudits = userId
-		? await db.query.audits.findMany({
-				where: eq(audits.userId, userId),
-				orderBy: (audits, { desc }) => [desc(audits.createdAt)],
-				limit: 20,
-			})
-		: await db.query.audits.findMany({
-				orderBy: (audits, { desc }) => [desc(audits.createdAt)],
-				limit: 20,
-			});
+	const allAudits = await db.query.audits.findMany({
+		orderBy: (audits, { desc }) => [desc(audits.createdAt)],
+		limit: 20,
+	});
 
 	const response: ApiResponse<DomainAudit[]> = {
 		data: allAudits.map(toAuditResponse),
@@ -86,10 +81,11 @@ auditRoutes.get("/", async (c) => {
 	return c.json(response);
 });
 
-// ─── GET /:id — Retorna uma auditoria completa ───────────────────────────────
+// ─── GET /:id — Retorna uma auditoria completa (com recommendations) ─────────
 auditRoutes.get("/:id", async (c) => {
 	const id = c.req.param("id");
 
+	// Valida formato uuid antes de bater no banco
 	const uuidRegex =
 		/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 	if (!uuidRegex.test(id)) {

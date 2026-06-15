@@ -291,7 +291,7 @@ export default function Home() {
 											</h3>
 									<div className="space-y-3">
 										{currentAudit.recommendations.map((rec, i) => (
-											<RecommendationCard key={rec.id} recommendation={rec} index={i} />
+											<RecommendationCard key={rec.id ?? i} recommendation={rec} index={i} />
 										))}
 									</div>
 										</motion.div>

@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import ThemeToggle from "./components/ThemeToggle";
 import UserMenu from "./components/UserMenu";
 import { useAuditFlow } from "./hooks/useAuditFlow";
 
@@ -84,7 +85,7 @@ export default function Home() {
 	];
 
 	return (
-		<main className="min-h-screen bg-gray-950 text-white px-4 py-6 md:p-8">
+		<main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white px-4 py-6 md:p-8">
 			<div className="max-w-5xl mx-auto">
 				{/* Header */}
 				<motion.div
@@ -94,31 +95,36 @@ export default function Home() {
 					transition={{ duration: 0.4 }}
 				>
 					<div>
-						<h1 className="text-2xl md:text-3xl font-bold text-white">
+						<h1 className="text-2xl md:text-3xl font-bold dark:text-white text-gray-900">
 							AEO & SEO Radar 📡
 						</h1>
-						<p className="text-gray-400 mt-1 text-sm md:text-base">
+						<p className="dark:text-gray-400 text-gray-500 mt-1 text-sm md:text-base">
 							Monitoramento e auditoria de presença digital
 						</p>
 					</div>
-					<UserMenu />
+					<div className="flex items-center gap-2">
+						<ThemeToggle />
+						<UserMenu />
+					</div>
 				</motion.div>
 
 				{/* Nova Auditoria */}
 				<motion.div
-					className="bg-gray-900 rounded-xl p-4 md:p-6 mb-6 border border-gray-800"
+					className="dark:bg-gray-900 bg-white rounded-xl p-4 md:p-6 mb-6 dark:border-gray-800 border-gray-200 border"
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.4, delay: 0.1 }}
 				>
-					<h2 className="text-lg font-semibold mb-3">Nova Auditoria</h2>
+					<h2 className="text-lg font-semibold mb-3 dark:text-white text-gray-900">
+						Nova Auditoria
+					</h2>
 					<div className="flex flex-col sm:flex-row gap-3">
 						<input
 							type="url"
 							value={url}
 							onChange={(e) => setUrl(e.target.value)}
 							placeholder="https://seusite.com.br"
-							className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+							className="flex-1 dark:bg-gray-800 bg-gray-100 dark:border-gray-700 border-gray-300 border rounded-lg px-4 py-2.5 dark:text-white text-gray-900 placeholder-gray-500 focus:outline-none focus:border-blue-500"
 						/>
 						<button
 							type="button"
@@ -148,14 +154,16 @@ export default function Home() {
 						return (
 							<motion.div
 								key={card.label}
-								className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center"
+								className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl p-4 text-center"
 								initial={{ opacity: 0, scale: 0.9 }}
 								animate={{ opacity: 1, scale: 1 }}
 								transition={{ duration: 0.3, delay: 0.2 + index * 0.07 }}
 							>
-								<p className="text-gray-500 text-xs mb-1">{card.label}</p>
+								<p className="dark:text-gray-500 text-gray-400 text-xs mb-1">
+									{card.label}
+								</p>
 								{isPolling ? (
-									<div className="h-8 w-14 mx-auto rounded-lg bg-gray-700 animate-pulse" />
+									<div className="h-8 w-14 mx-auto rounded-lg dark:bg-gray-700 bg-gray-200 animate-pulse" />
 								) : showNA ? (
 									<p
 										className="text-xl font-bold text-gray-500"
@@ -190,7 +198,7 @@ export default function Home() {
 							exit={{ opacity: 0, y: -20 }}
 							transition={{ duration: 0.4 }}
 						>
-							<div className="bg-gray-900 border border-gray-800 rounded-xl p-4 md:p-6">
+							<div className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl p-4 md:p-6">
 								<h3
 									className={`font-semibold mb-3 ${currentAudit.status === "completed" ? "text-green-400" : currentAudit.status === "failed" ? "text-red-400" : "text-yellow-400"}`}
 								>
@@ -202,17 +210,23 @@ export default function Home() {
 											? "❌ Auditoria falhou"
 											: "⏳ Auditando..."}
 								</h3>
-								<div className="text-sm text-gray-400 space-y-1">
+								<div className="text-sm dark:text-gray-400 text-gray-500 space-y-1">
 									<p>
-										<span className="text-gray-300">Domínio:</span>{" "}
+										<span className="dark:text-gray-300 text-gray-700">
+											Domínio:
+										</span>{" "}
 										<span className="break-all">{currentAudit.domain}</span>
 									</p>
 									<p>
-										<span className="text-gray-300">Status:</span>{" "}
+										<span className="dark:text-gray-300 text-gray-700">
+											Status:
+										</span>{" "}
 										{currentAudit.status}
 									</p>
 									<p>
-										<span className="text-gray-300">Criado em:</span>{" "}
+										<span className="dark:text-gray-300 text-gray-700">
+											Criado em:
+										</span>{" "}
 										{formatDate(currentAudit.createdAt)}
 									</p>
 								</div>
@@ -247,13 +261,13 @@ export default function Home() {
 							</div>
 
 							{isPolling && (
-								<div className="bg-gray-900 border border-gray-800 rounded-xl p-4 md:p-6 mt-4">
-									<div className="h-4 w-48 rounded bg-gray-700 animate-pulse mb-4" />
+								<div className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl p-4 md:p-6 mt-4">
+									<div className="h-4 w-48 rounded dark:bg-gray-700 bg-gray-200 animate-pulse mb-4" />
 									<div className="space-y-3">
 										{[1, 2, 3, 4, 5].map((i) => (
 											<div
 												key={i}
-												className="h-3 rounded bg-gray-700 animate-pulse"
+												className="h-3 rounded dark:bg-gray-700 bg-gray-200 animate-pulse"
 												style={{ width: `${70 + i * 5}%` }}
 											/>
 										))}
@@ -266,7 +280,7 @@ export default function Home() {
 									currentAudit.recommendations &&
 									currentAudit.recommendations.length > 0 && (
 										<motion.div
-											className="bg-gray-900 border border-gray-800 rounded-xl p-4 md:p-6 mt-4"
+											className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl p-4 md:p-6 mt-4"
 											initial={{ opacity: 0, y: 20 }}
 											animate={{ opacity: 1, y: 0 }}
 											transition={{ duration: 0.4 }}
@@ -278,7 +292,7 @@ export default function Home() {
 												{currentAudit.recommendations.map((rec, i) => (
 													<motion.li
 														key={i}
-														className="flex gap-3 text-sm text-gray-300"
+														className="flex gap-3 text-sm dark:text-gray-300 text-gray-600"
 														initial={{ opacity: 0, x: -20 }}
 														animate={{ opacity: 1, x: 0 }}
 														transition={{ duration: 0.3, delay: i * 0.1 }}
@@ -297,12 +311,12 @@ export default function Home() {
 					) : (
 						<motion.div
 							key="empty-state"
-							className="bg-gray-900 border border-gray-800 rounded-xl p-8 md:p-12 text-center mb-6"
+							className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl p-8 md:p-12 text-center mb-6"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 							transition={{ duration: 0.4, delay: 0.3 }}
 						>
-							<p className="text-gray-500 text-base md:text-lg">
+							<p className="dark:text-gray-500 text-gray-400 text-base md:text-lg">
 								Insira uma URL acima para iniciar a auditoria
 							</p>
 						</motion.div>
@@ -313,12 +327,12 @@ export default function Home() {
 				<AnimatePresence>
 					{history && history.length > 0 && (
 						<motion.div
-							className="bg-gray-900 border border-gray-800 rounded-xl p-4 md:p-6"
+							className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl p-4 md:p-6"
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.4, delay: 0.4 }}
 						>
-							<h2 className="text-lg font-semibold mb-4">
+							<h2 className="text-lg font-semibold mb-4 dark:text-white text-gray-900">
 								Histórico de Auditorias
 							</h2>
 							<div className="space-y-3">
@@ -326,7 +340,7 @@ export default function Home() {
 									<motion.div
 										key={item.id}
 										onClick={() => selectAudit(item.id)}
-										className={`flex items-center justify-between gap-3 p-3 rounded-lg cursor-pointer transition-colors ${item.id === selectedAuditId ? "bg-gray-700 border border-blue-500" : "bg-gray-800 hover:bg-gray-700"}`}
+										className={`flex items-center justify-between gap-3 p-3 rounded-lg cursor-pointer transition-colors ${item.id === selectedAuditId ? "dark:bg-gray-700 bg-blue-50 border border-blue-500" : "dark:bg-gray-800 bg-gray-100 dark:hover:bg-gray-700 hover:bg-gray-200"}`}
 										initial={{ opacity: 0, x: -20 }}
 										animate={{ opacity: 1, x: 0 }}
 										transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -334,10 +348,10 @@ export default function Home() {
 										whileTap={{ scale: 0.99 }}
 									>
 										<div className="min-w-0 flex-1">
-											<p className="text-sm text-white truncate">
+											<p className="text-sm dark:text-white text-gray-900 truncate">
 												{item.domain}
 											</p>
-											<p className="text-xs text-gray-500">
+											<p className="text-xs dark:text-gray-500 text-gray-400">
 												{formatDate(item.createdAt)}
 											</p>
 										</div>

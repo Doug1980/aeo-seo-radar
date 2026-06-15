@@ -1,86 +1,121 @@
 import type { ApiResponse, DomainAudit } from "@aeo-seo-radar/shared";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
+import { zValidator } from "@hono/zod-validator";
+import { desc, eq } from "drizzle-orm";
+import { Hono } from "hono";
+import { z } from "zod";
+import { db } from "../db/index.js";
+import { audits } from "../db/schema.js";
+import { startBackgroundAudit } from "../services/auditService.js";
 
-const API = `${process.env.NEXT_PUBLIC_API_URL}/api/v1`;
+export const auditRoutes = new Hono();
 
-function useAuthHeaders() {
-	const { data: session } = useSession();
-	const userId = session?.user?.email ?? null;
-
+function toAuditResponse(audit: typeof audits.$inferSelect): DomainAudit {
 	return {
-		"Content-Type": "application/json",
-		...(userId ? { "x-user-id": userId } : {}),
+		id: audit.id,
+		domain: audit.domain,
+		status: audit.status,
+		createdAt: audit.createdAt.toISOString(),
+		completedAt: audit.completedAt?.toISOString(),
+		scores: audit.scores ?? {
+			overall: 0,
+			seo: 0,
+			aeo: 0,
+			performance: 0,
+			schemaMarkup: 0,
+		},
+		recommendations: audit.recommendations ?? [],
 	};
 }
 
-export function useAuditHistory() {
-	const { data: session } = useSession();
-	const userId = session?.user?.email ?? null;
-	const headers = {
-		...(userId ? { "x-user-id": userId } : {}),
+const createAuditSchema = z.object({
+	domain: z.string().url({ message: "Informe uma URL válida" }),
+});
+
+auditRoutes.post("/", zValidator("json", createAuditSchema), async (c) => {
+	const { domain } = c.req.valid("json");
+	const userId = c.req.header("x-user-id") ?? null;
+
+	console.log("📝 POST /audits — userId:", userId);
+
+	const [audit] = await db
+		.insert(audits)
+		.values({
+			domain,
+			userId,
+			status: "pending",
+			scores: { overall: 0, seo: 0, aeo: 0, performance: 0, schemaMarkup: 0 },
+		})
+		.returning();
+
+	if (!audit) {
+		return c.json({ error: "Erro ao criar auditoria no banco" }, 500);
+	}
+
+	await db
+		.update(audits)
+		.set({ status: "running" })
+		.where(eq(audits.id, audit.id));
+
+	startBackgroundAudit(audit.id, domain);
+
+	const response: ApiResponse<DomainAudit> = {
+		data: toAuditResponse(audit),
 	};
 
-	return useQuery<DomainAudit[]>({
-		queryKey: ["audit-history", userId],
-		queryFn: async () => {
-			const res = await fetch(`${API}/audits`, { headers });
-			if (!res.ok) throw new Error("Erro ao buscar histórico");
-			const body = await res.json();
-			return body.data;
-		},
-		enabled: !!userId,
-	});
-}
+	return c.json(response, 201);
+});
 
-export function useAuditById(
-	id: string | null,
-	enablePolling: boolean = false,
-	onDone?: () => void,
-) {
-	return useQuery<DomainAudit>({
-		queryKey: ["audit", id],
-		queryFn: async () => {
-			const res = await fetch(`${API}/audits/${id}`);
-			if (!res.ok) throw new Error("Erro ao buscar auditoria");
-			const body = await res.json();
-			const data: DomainAudit = body.data;
+auditRoutes.get("/", async (c) => {
+	const userId = c.req.header("x-user-id") ?? null;
 
-			const isDone =
-				(data.status === "completed" &&
-					(data.recommendations?.length ?? 0) > 0) ||
-				data.status === "failed";
+	console.log("🔍 GET /audits — userId:", userId);
 
-			if (isDone) onDone?.();
-
-			return data;
-		},
-		enabled: !!id,
-		refetchOnWindowFocus: false,
-		refetchInterval: enablePolling ? 5000 : false,
-	});
-}
-
-export function useCreateAudit() {
-	const queryClient = useQueryClient();
-	const { data: session } = useSession();
-	const userId = session?.user?.email ?? null;
-
-	return useMutation<ApiResponse<DomainAudit>, Error, string>({
-		mutationFn: async (domain: string) => {
-			const res = await fetch(`${API}/audits`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					...(userId ? { "x-user-id": userId } : {}),
-				},
-				body: JSON.stringify({ domain }),
+	const allAudits = userId
+		? await db.query.audits.findMany({
+				where: eq(audits.userId, userId),
+				orderBy: [desc(audits.createdAt)],
+				limit: 20,
+			})
+		: await db.query.audits.findMany({
+				orderBy: [desc(audits.createdAt)],
+				limit: 20,
 			});
-			if (!res.ok) throw new Error("Falha ao iniciar auditoria");
-			return res.json();
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["audit-history", userId] });
-		},
+
+	console.log("📋 Retornando:", allAudits.length, "auditorias");
+
+	const response: ApiResponse<DomainAudit[]> = {
+		data: allAudits.map(toAuditResponse),
+	};
+
+	return c.json(response);
+});
+
+auditRoutes.get("/:id", async (c) => {
+	const id = c.req.param("id");
+
+	const uuidRegex =
+		/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+	if (!uuidRegex.test(id)) {
+		return c.json(
+			{ error: "Auditoria não encontrada", code: "NOT_FOUND" },
+			404,
+		);
+	}
+
+	const audit = await db.query.audits.findFirst({
+		where: eq(audits.id, id),
 	});
-}
+
+	if (!audit) {
+		return c.json(
+			{ error: "Auditoria não encontrada", code: "NOT_FOUND" },
+			404,
+		);
+	}
+
+	const response: ApiResponse<DomainAudit> = {
+		data: toAuditResponse(audit),
+	};
+
+	return c.json(response);
+});

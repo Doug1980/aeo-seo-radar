@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { FaGithub } from "react-icons/fa";

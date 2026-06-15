@@ -4,23 +4,12 @@ import { useSession } from "next-auth/react";
 
 const API = `${process.env.NEXT_PUBLIC_API_URL}/api/v1`;
 
-function useAuthHeaders() {
-	const { data: session } = useSession();
-	const userId = session?.user?.email ?? null;
-
-	return {
-		"Content-Type": "application/json",
-		...(userId ? { "x-user-id": userId } : {}),
-	};
-}
-
 export function useAuditHistory() {
 	const { data: session } = useSession();
 	const userId = session?.user?.email ?? null;
 	const headers = {
 		...(userId ? { "x-user-id": userId } : {}),
 	};
-
 	return useQuery<DomainAudit[]>({
 		queryKey: ["audit-history", userId],
 		queryFn: async () => {
@@ -38,24 +27,25 @@ export function useAuditById(
 	enablePolling: boolean = false,
 	onDone?: () => void,
 ) {
+	const { data: session } = useSession();
+	const userId = session?.user?.email ?? null;
 	return useQuery<DomainAudit>({
-		queryKey: ["audit", id],
+		queryKey: ["audit", id, userId],
 		queryFn: async () => {
-			const res = await fetch(`${API}/audits/${id}`);
+			const res = await fetch(`${API}/audits/${id}`, {
+				headers: { ...(userId ? { "x-user-id": userId } : {}) }, // ← agora manda o header
+			});
 			if (!res.ok) throw new Error("Erro ao buscar auditoria");
 			const body = await res.json();
 			const data: DomainAudit = body.data;
-
 			const isDone =
 				(data.status === "completed" &&
 					(data.recommendations?.length ?? 0) > 0) ||
 				data.status === "failed";
-
 			if (isDone) onDone?.();
-
 			return data;
 		},
-		enabled: !!id,
+		enabled: !!id && !!userId,
 		refetchOnWindowFocus: false,
 		refetchInterval: enablePolling ? 5000 : false,
 	});
@@ -65,7 +55,6 @@ export function useCreateAudit() {
 	const queryClient = useQueryClient();
 	const { data: session } = useSession();
 	const userId = session?.user?.email ?? null;
-
 	return useMutation<ApiResponse<DomainAudit>, Error, string>({
 		mutationFn: async (domain: string) => {
 			const res = await fetch(`${API}/audits`, {

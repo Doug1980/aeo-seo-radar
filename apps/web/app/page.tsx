@@ -1,4 +1,5 @@
 "use client";
+import RecommendationCard from "./components/RecommendationCard";
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
@@ -288,22 +289,11 @@ export default function Home() {
 											<h3 className="font-semibold mb-4 text-blue-400">
 												🤖 Recomendações da IA
 											</h3>
-											<ul className="space-y-3">
-												{currentAudit.recommendations.map((rec, i) => (
-													<motion.li
-														key={i}
-														className="flex gap-3 text-sm dark:text-gray-300 text-gray-600"
-														initial={{ opacity: 0, x: -20 }}
-														animate={{ opacity: 1, x: 0 }}
-														transition={{ duration: 0.3, delay: i * 0.1 }}
-													>
-														<span className="text-blue-400 font-bold shrink-0">
-															{i + 1}.
-														</span>
-														<span>{rec}</span>
-													</motion.li>
-												))}
-											</ul>
+									<div className="space-y-3">
+										{currentAudit.recommendations.map((rec, i) => (
+											<RecommendationCard key={rec.id} recommendation={rec} index={i} />
+										))}
+									</div>
 										</motion.div>
 									)}
 							</AnimatePresence>

@@ -1,6 +1,7 @@
+// apps/api/src/routes/audit.ts
 import type { ApiResponse, DomainAudit } from "@aeo-seo-radar/shared";
 import { zValidator } from "@hono/zod-validator";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { db } from "../db/index.js";
@@ -33,7 +34,14 @@ const createAuditSchema = z.object({
 
 auditRoutes.post("/", zValidator("json", createAuditSchema), async (c) => {
 	const { domain } = c.req.valid("json");
-	const userId = c.req.header("x-user-id") ?? null;
+
+	const userId = c.req.header("x-user-id");
+	if (!userId) {
+		return c.json(
+			{ error: "Autenticação necessária", code: "UNAUTHORIZED" },
+			401,
+		);
+	}
 
 	console.log("📝 POST /audits — userId:", userId);
 
@@ -66,20 +74,21 @@ auditRoutes.post("/", zValidator("json", createAuditSchema), async (c) => {
 });
 
 auditRoutes.get("/", async (c) => {
-	const userId = c.req.header("x-user-id") ?? null;
+	const userId = c.req.header("x-user-id");
+	if (!userId) {
+		return c.json(
+			{ error: "Autenticação necessária", code: "UNAUTHORIZED" },
+			401,
+		);
+	}
 
 	console.log("🔍 GET /audits — userId:", userId);
 
-	const allAudits = userId
-		? await db.query.audits.findMany({
-				where: eq(audits.userId, userId),
-				orderBy: [desc(audits.createdAt)],
-				limit: 20,
-			})
-		: await db.query.audits.findMany({
-				orderBy: [desc(audits.createdAt)],
-				limit: 20,
-			});
+	const allAudits = await db.query.audits.findMany({
+		where: eq(audits.userId, userId),
+		orderBy: [desc(audits.createdAt)],
+		limit: 20,
+	});
 
 	console.log("📋 Retornando:", allAudits.length, "auditorias");
 
@@ -91,6 +100,14 @@ auditRoutes.get("/", async (c) => {
 });
 
 auditRoutes.get("/:id", async (c) => {
+	const userId = c.req.header("x-user-id");
+	if (!userId) {
+		return c.json(
+			{ error: "Autenticação necessária", code: "UNAUTHORIZED" },
+			401,
+		);
+	}
+
 	const id = c.req.param("id");
 
 	const uuidRegex =
@@ -103,7 +120,7 @@ auditRoutes.get("/:id", async (c) => {
 	}
 
 	const audit = await db.query.audits.findFirst({
-		where: eq(audits.id, id),
+		where: and(eq(audits.id, id), eq(audits.userId, userId)),
 	});
 
 	if (!audit) {

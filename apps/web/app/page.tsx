@@ -61,7 +61,14 @@ export default function Home() {
 	];
 
 	return (
-		<main className="min-h-screen bg-gray-950 text-white p-8">
+		<main
+			style={{
+				minHeight: "100dvh",
+				background:
+					"linear-gradient(135deg, #030712 0%, #111827 50%, #0c1a3d 100%)",
+			}}
+			className="text-white flex items-center justify-center px-4 py-12"
+		>
 			<div className="max-w-5xl mx-auto">
 				<div className="mb-10 flex items-center justify-between">
 					<div>

@@ -1,114 +1,86 @@
 import type { ApiResponse, DomainAudit } from "@aeo-seo-radar/shared";
-import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
-import { Hono } from "hono";
-import { z } from "zod";
-import { db } from "../db/index.js";
-import { audits } from "../db/schema.js";
-import { startBackgroundAudit } from "../services/auditService.js";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 
-export const auditRoutes = new Hono();
+const API = `${process.env.NEXT_PUBLIC_API_URL}/api/v1`;
 
-// ─── Contrato central de resposta ────────────────────────────────────────────
-// Qualquer campo novo adicionado ao tipo DomainAudit deve vir aqui.
-// O TypeScript avisa se algo estiver faltando — o compilador vira o guardião.
-function toAuditResponse(audit: typeof audits.$inferSelect): DomainAudit {
+function useAuthHeaders() {
+	const { data: session } = useSession();
+	const userId = session?.user?.email ?? null;
+
 	return {
-		id: audit.id,
-		domain: audit.domain,
-		status: audit.status,
-		createdAt: audit.createdAt.toISOString(),
-		completedAt: audit.completedAt?.toISOString(),
-		scores: audit.scores ?? {
-			overall: 0,
-			seo: 0,
-			aeo: 0,
-			performance: 0,
-			schemaMarkup: 0,
-		},
-		recommendations: audit.recommendations ?? [],
+		"Content-Type": "application/json",
+		...(userId ? { "x-user-id": userId } : {}),
 	};
 }
 
-// ─── Schemas de validação ─────────────────────────────────────────────────────
-const createAuditSchema = z.object({
-	domain: z.string().url({ message: "Informe uma URL válida" }),
-});
-
-// ─── POST / — Cria uma nova auditoria ────────────────────────────────────────
-auditRoutes.post("/", zValidator("json", createAuditSchema), async (c) => {
-	const { domain } = c.req.valid("json");
-
-	const [audit] = await db
-		.insert(audits)
-		.values({
-			domain,
-			status: "pending",
-			scores: { overall: 0, seo: 0, aeo: 0, performance: 0, schemaMarkup: 0 },
-		})
-		.returning();
-
-	if (!audit) {
-		return c.json({ error: "Erro ao criar auditoria no banco" }, 500);
-	}
-
-	await db
-		.update(audits)
-		.set({ status: "running" })
-		.where(eq(audits.id, audit.id));
-
-	// Dispara em background sem bloquear a resposta
-	startBackgroundAudit(audit.id, domain);
-
-	const response: ApiResponse<DomainAudit> = {
-		data: toAuditResponse(audit),
+export function useAuditHistory() {
+	const { data: session } = useSession();
+	const userId = session?.user?.email ?? null;
+	const headers = {
+		...(userId ? { "x-user-id": userId } : {}),
 	};
 
-	return c.json(response, 201);
-});
-
-// ─── GET / — Lista as auditorias recentes ────────────────────────────────────
-auditRoutes.get("/", async (c) => {
-	const allAudits = await db.query.audits.findMany({
-		orderBy: (audits, { desc }) => [desc(audits.createdAt)],
-		limit: 20,
+	return useQuery<DomainAudit[]>({
+		queryKey: ["audit-history", userId],
+		queryFn: async () => {
+			const res = await fetch(`${API}/audits`, { headers });
+			if (!res.ok) throw new Error("Erro ao buscar histórico");
+			const body = await res.json();
+			return body.data;
+		},
+		enabled: !!userId,
 	});
+}
 
-	const response: ApiResponse<DomainAudit[]> = {
-		data: allAudits.map(toAuditResponse),
-	};
+export function useAuditById(
+	id: string | null,
+	enablePolling: boolean = false,
+	onDone?: () => void,
+) {
+	return useQuery<DomainAudit>({
+		queryKey: ["audit", id],
+		queryFn: async () => {
+			const res = await fetch(`${API}/audits/${id}`);
+			if (!res.ok) throw new Error("Erro ao buscar auditoria");
+			const body = await res.json();
+			const data: DomainAudit = body.data;
 
-	return c.json(response);
-});
+			const isDone =
+				(data.status === "completed" &&
+					(data.recommendations?.length ?? 0) > 0) ||
+				data.status === "failed";
 
-// ─── GET /:id — Retorna uma auditoria completa (com recommendations) ─────────
-auditRoutes.get("/:id", async (c) => {
-	const id = c.req.param("id");
+			if (isDone) onDone?.();
 
-	// Valida formato uuid antes de bater no banco
-	const uuidRegex =
-		/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-	if (!uuidRegex.test(id)) {
-		return c.json(
-			{ error: "Auditoria não encontrada", code: "NOT_FOUND" },
-			404,
-		);
-	}
-
-	const audit = await db.query.audits.findFirst({
-		where: eq(audits.id, id),
+			return data;
+		},
+		enabled: !!id,
+		refetchOnWindowFocus: false,
+		refetchInterval: enablePolling ? 5000 : false,
 	});
+}
 
-	if (!audit) {
-		return c.json(
-			{ error: "Auditoria não encontrada", code: "NOT_FOUND" },
-			404,
-		);
-	}
+export function useCreateAudit() {
+	const queryClient = useQueryClient();
+	const { data: session } = useSession();
+	const userId = session?.user?.email ?? null;
 
-	const response: ApiResponse<DomainAudit> = {
-		data: toAuditResponse(audit),
-	};
-
-	return c.json(response);
-});
+	return useMutation<ApiResponse<DomainAudit>, Error, string>({
+		mutationFn: async (domain: string) => {
+			const res = await fetch(`${API}/audits`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					...(userId ? { "x-user-id": userId } : {}),
+				},
+				body: JSON.stringify({ domain }),
+			});
+			if (!res.ok) throw new Error("Falha ao iniciar auditoria");
+			return res.json();
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["audit-history", userId] });
+		},
+	});
+}

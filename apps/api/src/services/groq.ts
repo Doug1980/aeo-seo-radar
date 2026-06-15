@@ -92,5 +92,5 @@ Regras:
 		return [];
 	}
 
-	return parsed.data.recommendations.map((r) => ({ id: randomUUID(), ...r }));
+	return parsed.data.recommendations.map((r: Omit<Recommendation, "id">) => ({ id: randomUUID(), ...r }));
 }

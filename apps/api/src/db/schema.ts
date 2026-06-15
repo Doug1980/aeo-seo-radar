@@ -1,12 +1,10 @@
-// apps/api/src/db/schema.ts
-import type { Recommendation } from "@aeo-seo-radar/shared";
 import {
 	jsonb,
 	pgEnum,
 	pgTable,
-	text,
 	timestamp,
 	uuid,
+	varchar,
 } from "drizzle-orm/pg-core";
 
 export const auditStatusEnum = pgEnum("audit_status", [
@@ -16,26 +14,19 @@ export const auditStatusEnum = pgEnum("audit_status", [
 	"failed",
 ]);
 
-export interface AuditScores {
-	seo: number;
-	aeo: number;
-	performance: number;
-	schemaMarkup: number;
-	overall: number;
-}
-
 export const audits = pgTable("audits", {
 	id: uuid("id").primaryKey().defaultRandom(),
-	userId: text("user_id").notNull(),
-	domain: text("domain").notNull(),
+	userId: varchar("user_id", { length: 255 }),
+	domain: varchar("domain", { length: 255 }).notNull(),
 	status: auditStatusEnum("status").notNull().default("pending"),
-	scores: jsonb("scores").$type<AuditScores>(),
-	recommendations: jsonb("recommendations")
-		.$type<Recommendation[]>()
-		.notNull()
-		.default([]),
+	scores: jsonb("scores").$type<{
+		overall: number;
+		seo: number;
+		aeo: number;
+		performance: number;
+		schemaMarkup: number;
+	}>(),
+	recommendations: jsonb("recommendations").$type<string[]>(),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	completedAt: timestamp("completed_at"),
 });
-
-export type Audit = typeof audits.$inferSelect;

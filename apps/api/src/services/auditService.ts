@@ -1,4 +1,3 @@
-import type { Recommendation } from "@aeo-seo-radar/shared"; // ← LINHA NOVA
 import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { audits } from "../db/schema.js";
@@ -63,10 +62,10 @@ export async function startBackgroundAudit(
 			schemaMarkup: schemaResult.score,
 		};
 
-		let recommendations: Recommendation[] = []; // ← MUDOU (era string[])
+		let recommendations: string[] = [];
 		try {
 			recommendations = await generateRecommendations(domain, scores);
-			console.log(`🤖 ${recommendations.length} recomendações geradas`);
+			console.log(`🤖 Recomendações geradas:`, recommendations);
 		} catch (err) {
 			console.error("Groq error:", err);
 		}

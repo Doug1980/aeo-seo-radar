@@ -25,14 +25,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 		}),
 		Nodemailer({
 			server: {
-				host: "smtp-relay.brevo.com",
-				port: 587,
+				host: "smtp.gmail.com",
+				port: 465,
+				secure: true,
 				auth: {
-					user: process.env.BREVO_SMTP_USER!,
-					pass: process.env.BREVO_SMTP_KEY!,
+					user: process.env.GMAIL_USER!,
+					pass: process.env.GMAIL_APP_PASSWORD!,
 				},
 			},
-			from: process.env.AUTH_EMAIL_FROM!,
+			from: process.env.GMAIL_USER!,
 		}),
 	],
 	pages: {

@@ -1,5 +1,6 @@
 "use client";
 import RecommendationCard from "./components/RecommendationCard";
+import AuditProgress from "./components/AuditProgress";
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
@@ -263,7 +264,7 @@ export default function Home() {
 
 							{isPolling && (
 								<div className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl p-4 md:p-6 mt-4">
-									<div className="h-4 w-48 rounded dark:bg-gray-700 bg-gray-200 animate-pulse mb-4" />
+									<AuditProgress />
 									<div className="space-y-3">
 										{[1, 2, 3, 4, 5].map((i) => (
 											<div

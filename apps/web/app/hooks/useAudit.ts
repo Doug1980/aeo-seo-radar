@@ -47,7 +47,7 @@ export function useAuditById(
 		},
 		enabled: !!id && !!userId,
 		refetchOnWindowFocus: false,
-		refetchInterval: enablePolling ? 5000 : false,
+		refetchInterval: enablePolling ? 2000 : false,
 	});
 }
 

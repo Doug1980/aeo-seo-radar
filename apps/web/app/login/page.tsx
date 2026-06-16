@@ -193,6 +193,7 @@ export default function LoginPage() {
 function EmailForm({ onCancel }: { onCancel: () => void }) {
 	const [email, setEmail] = useState("");
 	const [loading, setLoading] = useState(false);
+	const [sent, setSent] = useState(false);
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
@@ -208,7 +209,8 @@ function EmailForm({ onCancel }: { onCancel: () => void }) {
 			if (result?.error) {
 				toast.error("Erro ao enviar o link. Tente novamente.");
 			} else {
-				toast.success("Link enviado, confirme através do seu email fornecido.");
+				// Em vez de só mostrar o toast, troca para a tela de confirmação
+				setSent(true);
 			}
 		} catch {
 			toast.error("Algo deu errado. Tente novamente.");
@@ -217,6 +219,33 @@ function EmailForm({ onCancel }: { onCancel: () => void }) {
 		}
 	}
 
+	// Tela de confirmação — aparece depois que o link é enviado
+	if (sent) {
+		return (
+			<div className="flex flex-col items-center text-center space-y-4 py-2">
+				<div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600/20">
+					<MdEmail size={28} className="text-blue-400" />
+				</div>
+				<div>
+					<h3 className="text-white font-medium text-lg">Email enviado!</h3>
+					<p className="text-gray-400 text-sm mt-1">
+						Enviamos um link de acesso para{" "}
+						<span className="text-gray-200">{email}</span>. Verifique sua caixa
+						de entrada (e a pasta de spam) para continuar.
+					</p>
+				</div>
+				<button
+					type="button"
+					onClick={onCancel}
+					className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 hover:text-white font-medium py-3 rounded-xl transition-colors cursor-pointer"
+				>
+					Voltar
+				</button>
+			</div>
+		);
+	}
+
+	// Tela do formulário — padrão
 	return (
 		<div className="space-y-3">
 			<p className="text-gray-500 text-sm mb-3">

@@ -199,7 +199,7 @@ function EmailForm({ onCancel }: { onCancel: () => void }) {
 		setLoading(true);
 
 		try {
-			const result = await signIn("resend", {
+			const result = await signIn("nodemailer", {
 				email,
 				callbackUrl: "/",
 				redirect: false,
@@ -208,7 +208,7 @@ function EmailForm({ onCancel }: { onCancel: () => void }) {
 			if (result?.error) {
 				toast.error("Erro ao enviar o link. Tente novamente.");
 			} else {
-				toast.success("Link mágico enviado! Verifique seu email.");
+				toast.success("Link enviado, confirme através do seu email fornecido.");
 			}
 		} catch {
 			toast.error("Algo deu errado. Tente novamente.");

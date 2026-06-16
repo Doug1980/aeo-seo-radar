@@ -229,9 +229,9 @@ function EmailForm({ onCancel }: { onCancel: () => void }) {
 				<div>
 					<h3 className="text-white font-medium text-lg">Email enviado!</h3>
 					<p className="text-gray-400 text-sm mt-1">
-						Enviamos um link de acesso para{" "}
+						Link de acesso enviado para{" "}
 						<span className="text-gray-200">{email}</span>. Verifique sua caixa
-						de entrada (e a pasta de spam) para continuar.
+						de entrada para continuar.
 					</p>
 				</div>
 				<button

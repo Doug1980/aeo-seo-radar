@@ -278,7 +278,7 @@ export default function Home() {
 									!isPageSpeedUnavailable(currentAudit.scores) &&
 									aeoHint(currentAudit.scores?.aeo) && (
 										<motion.div
-											className="mt-4 bg-blue-950/40 border border-blue-800/50 rounded-lg p-3 text-sm text-blue-300"
+											className="mt-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200"
 											initial={{ opacity: 0 }}
 											animate={{ opacity: 1 }}
 											transition={{ delay: 0.3 }}

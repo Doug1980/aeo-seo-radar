@@ -6,6 +6,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { db } from "../db/index.js";
 import { audits } from "../db/schema.js";
+import { rateLimit } from "../middleware/rateLimit.js";
 import { startBackgroundAudit } from "../services/auditService.js";
 
 export const auditRoutes = new Hono();
@@ -89,44 +90,49 @@ const createAuditSchema = z.object({
 		}),
 });
 
-auditRoutes.post("/", zValidator("json", createAuditSchema), async (c) => {
-	const { domain } = c.req.valid("json");
+auditRoutes.post(
+	"/",
+	rateLimit({ windowMs: 60_000, max: 5 }),
+	zValidator("json", createAuditSchema),
+	async (c) => {
+		const { domain } = c.req.valid("json");
 
-	const userId = c.req.header("x-user-id");
-	if (!userId) {
-		return c.json(
-			{ error: "Autenticação necessária", code: "UNAUTHORIZED" },
-			401,
-		);
-	}
+		const userId = c.req.header("x-user-id");
+		if (!userId) {
+			return c.json(
+				{ error: "Autenticação necessária", code: "UNAUTHORIZED" },
+				401,
+			);
+		}
 
-	const [audit] = await db
-		.insert(audits)
-		.values({
-			domain,
-			userId,
-			status: "pending",
-			scores: { overall: 0, seo: 0, aeo: 0, performance: 0, schemaMarkup: 0 },
-		})
-		.returning();
+		const [audit] = await db
+			.insert(audits)
+			.values({
+				domain,
+				userId,
+				status: "pending",
+				scores: { overall: 0, seo: 0, aeo: 0, performance: 0, schemaMarkup: 0 },
+			})
+			.returning();
 
-	if (!audit) {
-		return c.json({ error: "Erro ao criar auditoria no banco" }, 500);
-	}
+		if (!audit) {
+			return c.json({ error: "Erro ao criar auditoria no banco" }, 500);
+		}
 
-	await db
-		.update(audits)
-		.set({ status: "running" })
-		.where(eq(audits.id, audit.id));
+		await db
+			.update(audits)
+			.set({ status: "running" })
+			.where(eq(audits.id, audit.id));
 
-	startBackgroundAudit(audit.id, domain);
+		startBackgroundAudit(audit.id, domain);
 
-	const response: ApiResponse<DomainAudit> = {
-		data: toAuditResponse(audit),
-	};
+		const response: ApiResponse<DomainAudit> = {
+			data: toAuditResponse(audit),
+		};
 
-	return c.json(response, 201);
-});
+		return c.json(response, 201);
+	},
+);
 
 auditRoutes.get("/", async (c) => {
 	const userId = c.req.header("x-user-id");

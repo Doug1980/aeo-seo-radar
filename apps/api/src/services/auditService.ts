@@ -1,4 +1,5 @@
-import type { Recommendation } from "@aeo-seo-radar/shared"; // ← LINHA NOVA
+import { randomUUID } from "node:crypto";
+import type { Recommendation } from "@aeo-seo-radar/shared";
 import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { audits } from "../db/schema.js";
@@ -10,6 +11,30 @@ declare const console: {
 	log: (...args: any[]) => void;
 	error: (...args: any[]) => void;
 };
+
+/**
+ * Recomendação especial injetada quando o site parece ser renderizado
+ * no cliente (CSR). Como a análise lê o HTML cru (sem executar JS),
+ * schema/conteúdo injetados via JavaScript não são detectados — então
+ * avisamos o usuário de que o resultado pode estar subestimado.
+ */
+function buildCsrRecommendation(): Recommendation {
+	return {
+		id: randomUUID(),
+		title: "Site renderizado no cliente (CSR) detectado",
+		description:
+			"O HTML inicial deste site tem pouco conteúdo — o conteúdo real provavelmente é montado por JavaScript no navegador (React, Vue, Angular sem SSR). Mecanismos de busca e de resposta por IA leem o HTML inicial, então schema markup e conteúdo injetados via JavaScript podem não ser indexados. Isso também significa que esta auditoria pode estar subestimando o site.",
+		category: "aeo",
+		severity: "warning",
+		impact: "high",
+		effort: "high",
+		steps: [
+			"Adote renderização no servidor (SSR) ou geração estática (SSG) — em Next.js, Nuxt ou similar — para entregar o conteúdo já no HTML inicial.",
+			"Garanta que JSON-LD, Open Graph e meta tags estejam no HTML servido, não apenas injetados via JavaScript.",
+			"Valide o resultado com o Google Rich Results Test e inspecione o 'HTML cru' (view-source) para confirmar que o conteúdo aparece sem executar scripts.",
+		],
+	};
+}
 
 export async function startBackgroundAudit(
 	auditId: string,
@@ -24,7 +49,12 @@ export async function startBackgroundAudit(
 			}),
 			analyzeSchema(domain).catch((err) => {
 				console.error("Schema analysis error:", err);
-				return { hasSchema: false, types: [] as string[], score: 0 };
+				return {
+					hasSchema: false,
+					types: [] as string[],
+					score: 0,
+					isLikelyCSR: false,
+				};
 			}),
 		]);
 
@@ -38,7 +68,7 @@ export async function startBackgroundAudit(
 		const pageSpeedFailed = pageSpeedResult === null;
 
 		console.log(
-			`📋 Schema: ${schemaResult.types.join(", ") || "nenhum"} — AEO: ${schemaResult.score}`,
+			`📋 Schema: ${schemaResult.types.join(", ") || "nenhum"} — AEO: ${schemaResult.score}${schemaResult.isLikelyCSR ? " (CSR provável)" : ""}`,
 		);
 		console.log(
 			`⚡ PageSpeed: ${pageSpeedFailed ? "INDISPONÍVEL" : `performance ${ps.performance}, seo ${ps.seo}`}`,
@@ -63,12 +93,17 @@ export async function startBackgroundAudit(
 			schemaMarkup: schemaResult.score,
 		};
 
-		let recommendations: Recommendation[] = []; // ← MUDOU (era string[])
+		let recommendations: Recommendation[] = [];
 		try {
 			recommendations = await generateRecommendations(domain, scores);
 			console.log(`🤖 ${recommendations.length} recomendações geradas`);
 		} catch (err) {
 			console.error("Groq error:", err);
+		}
+
+		// Se o site parece CSR, injeta o aviso no topo da lista de recomendações
+		if (schemaResult.isLikelyCSR) {
+			recommendations = [buildCsrRecommendation(), ...recommendations];
 		}
 
 		await db

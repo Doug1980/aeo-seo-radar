@@ -67,13 +67,6 @@ export async function startBackgroundAudit(
 		};
 		const pageSpeedFailed = pageSpeedResult === null;
 
-		console.log(
-			`📋 Schema: ${schemaResult.types.join(", ") || "nenhum"} — AEO: ${schemaResult.score}${schemaResult.isLikelyCSR ? " (CSR provável)" : ""}`,
-		);
-		console.log(
-			`⚡ PageSpeed: ${pageSpeedFailed ? "INDISPONÍVEL" : `performance ${ps.performance}, seo ${ps.seo}`}`,
-		);
-
 		// Score geral: média só do que está disponível
 		const available = [
 			!pageSpeedFailed ? ps.performance : null,
@@ -96,7 +89,6 @@ export async function startBackgroundAudit(
 		let recommendations: Recommendation[] = [];
 		try {
 			recommendations = await generateRecommendations(domain, scores);
-			console.log(`🤖 ${recommendations.length} recomendações geradas`);
 		} catch (err) {
 			console.error("Groq error:", err);
 		}
@@ -115,10 +107,6 @@ export async function startBackgroundAudit(
 				recommendations,
 			})
 			.where(eq(audits.id, auditId));
-
-		console.log(
-			`✅ Auditoria concluída: ${domain} — Score: ${overall}${pageSpeedFailed ? " (PageSpeed indisponível)" : ""}`,
-		);
 	} catch (err: any) {
 		// Só cai aqui se algo realmente crítico quebrar (ex: banco)
 		await db
@@ -127,7 +115,7 @@ export async function startBackgroundAudit(
 			.where(eq(audits.id, auditId));
 
 		console.error(
-			`❌ Auditoria falhou em background para ${domain}:`,
+			`Auditoria falhou em background para ${domain}:`,
 			err?.message || err,
 		);
 	}

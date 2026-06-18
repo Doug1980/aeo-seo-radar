@@ -5,7 +5,6 @@ export async function generateRecommendations(
   scores: AuditScores
 ): Promise<string[]> {
   const apiKey = process.env['GEMINI_API_KEY'] ?? ''
-  console.log('Gemini key length:', apiKey.length)
 
   const prompt = `
 Você é um especialista em SEO e AEO (Answer Engine Optimization).

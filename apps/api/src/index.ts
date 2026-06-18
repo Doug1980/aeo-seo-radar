@@ -36,6 +36,6 @@ app.onError((err, c) => {
 if (process.env["NODE_ENV"] !== "test") {
 	const port = Number(process.env["PORT"] ?? 3001);
 	serve({ fetch: app.fetch, port }, () => {
-		console.log(`🚀 API rodando em http://localhost:${port}`);
+		console.log(`API rodando na porta ${port}`);
 	});
 }

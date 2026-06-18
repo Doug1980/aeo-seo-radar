@@ -103,11 +103,6 @@ export async function runPageSpeedAudit(url: string): Promise<PageSpeedResult> {
 	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
 		try {
 			const result = await attemptPageSpeed(url, apiKey);
-			if (attempt > 1) {
-				console.log(
-					`✅ PageSpeed funcionou na tentativa ${attempt} para ${url}`,
-				);
-			}
 			return result;
 		} catch (error) {
 			lastError = error;

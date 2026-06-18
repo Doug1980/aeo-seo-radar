@@ -1,9 +1,10 @@
 "use client";
-import RecommendationCard from "./components/RecommendationCard";
-import AuditProgress from "./components/AuditProgress";
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import AuditProgress from "./components/AuditProgress";
+import { CheckCircle2, AlertTriangle, XCircle, Loader2 } from "lucide-react";
+import RecommendationCard from "./components/RecommendationCard";
 import ThemeToggle from "./components/ThemeToggle";
 import UserMenu from "./components/UserMenu";
 import { useAuditFlow } from "./hooks/useAuditFlow";
@@ -87,7 +88,7 @@ export default function Home() {
 	];
 
 	return (
-		<main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white px-4 py-6 md:p-8">
+		<main className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-blue-50 dark:from-gray-950 dark:via-gray-950 dark:to-gray-950 dark:bg-gray-950 text-gray-900 dark:text-white px-4 py-6 md:p-8">
 			<div className="max-w-5xl mx-auto">
 				{/* Header */}
 				<motion.div
@@ -112,7 +113,7 @@ export default function Home() {
 
 				{/* Nova Auditoria */}
 				<motion.div
-					className="dark:bg-gray-900 bg-white rounded-xl p-4 md:p-6 mb-6 dark:border-gray-800 border-gray-200 border"
+					className="dark:bg-gray-900 bg-white rounded-xl shadow-sm dark:shadow-none p-4 md:p-6 mb-6 dark:border-gray-800 border-gray-200 border"
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.4, delay: 0.1 }}
@@ -156,7 +157,7 @@ export default function Home() {
 						return (
 							<motion.div
 								key={card.label}
-								className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl p-4 text-center"
+								className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl shadow-sm dark:shadow-none p-4 text-center"
 								initial={{ opacity: 0, scale: 0.9 }}
 								animate={{ opacity: 1, scale: 1 }}
 								transition={{ duration: 0.3, delay: 0.2 + index * 0.07 }}
@@ -200,17 +201,33 @@ export default function Home() {
 							exit={{ opacity: 0, y: -20 }}
 							transition={{ duration: 0.4 }}
 						>
-							<div className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl p-4 md:p-6">
+							<div className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl shadow-sm dark:shadow-none p-4 md:p-6">
 								<h3
-									className={`font-semibold mb-3 ${currentAudit.status === "completed" ? "text-green-400" : currentAudit.status === "failed" ? "text-red-400" : "text-yellow-400"}`}
+									className={`font-semibold mb-3 flex items-center gap-2 ${currentAudit.status === "completed" ? "text-green-400" : currentAudit.status === "failed" ? "text-red-400" : "text-yellow-400"}`}
 								>
-									{currentAudit.status === "completed"
-										? isPageSpeedUnavailable(currentAudit.scores)
-											? "⚠️ Auditoria concluída parcialmente"
-											: "✅ Auditoria concluída"
-										: currentAudit.status === "failed"
-											? "❌ Auditoria falhou"
-											: "⏳ Auditando..."}
+									{currentAudit.status === "completed" ? (
+										isPageSpeedUnavailable(currentAudit.scores) ? (
+											<>
+												<AlertTriangle size={20} />
+												Auditoria concluída parcialmente
+											</>
+										) : (
+											<>
+												<CheckCircle2 size={20} />
+												Auditoria concluída
+											</>
+										)
+									) : currentAudit.status === "failed" ? (
+										<>
+											<XCircle size={20} />
+											Auditoria falhou
+										</>
+									) : (
+										<>
+											<Loader2 size={20} className="animate-spin" />
+											Auditando...
+										</>
+									)}
 								</h3>
 								<div className="text-sm dark:text-gray-400 text-gray-500 space-y-1">
 									<p>
@@ -263,7 +280,7 @@ export default function Home() {
 							</div>
 
 							{isPolling && (
-								<div className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl p-4 md:p-6 mt-4">
+								<div className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl shadow-sm dark:shadow-none p-4 md:p-6 mt-4">
 									<AuditProgress />
 									<div className="space-y-3">
 										{[1, 2, 3, 4, 5].map((i) => (
@@ -282,7 +299,7 @@ export default function Home() {
 									currentAudit.recommendations &&
 									currentAudit.recommendations.length > 0 && (
 										<motion.div
-											className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl p-4 md:p-6 mt-4"
+											className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl shadow-sm dark:shadow-none p-4 md:p-6 mt-4"
 											initial={{ opacity: 0, y: 20 }}
 											animate={{ opacity: 1, y: 0 }}
 											transition={{ duration: 0.4 }}
@@ -290,11 +307,15 @@ export default function Home() {
 											<h3 className="font-semibold mb-4 text-blue-400">
 												🤖 Recomendações da IA
 											</h3>
-									<div className="space-y-3">
-										{currentAudit.recommendations.map((rec, i) => (
-											<RecommendationCard key={rec.id ?? i} recommendation={rec} index={i} />
-										))}
-									</div>
+											<div className="space-y-3">
+												{currentAudit.recommendations.map((rec, i) => (
+													<RecommendationCard
+														key={rec.id ?? i}
+														recommendation={rec}
+														index={i}
+													/>
+												))}
+											</div>
 										</motion.div>
 									)}
 							</AnimatePresence>
@@ -302,7 +323,7 @@ export default function Home() {
 					) : (
 						<motion.div
 							key="empty-state"
-							className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl p-8 md:p-12 text-center mb-6"
+							className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl shadow-sm dark:shadow-none p-8 md:p-12 text-center mb-6"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 							transition={{ duration: 0.4, delay: 0.3 }}
@@ -318,7 +339,7 @@ export default function Home() {
 				<AnimatePresence>
 					{history && history.length > 0 && (
 						<motion.div
-							className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl p-4 md:p-6"
+							className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl shadow-sm dark:shadow-none p-4 md:p-6"
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.4, delay: 0.4 }}

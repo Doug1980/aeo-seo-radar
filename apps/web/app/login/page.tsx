@@ -5,6 +5,7 @@ import { useState } from "react";
 import { FaGithub } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { MdEmail } from "react-icons/md";
+import { Sparkles } from "lucide-react";
 import { Toaster, toast } from "sonner";
 
 export default function LoginPage() {
@@ -265,7 +266,13 @@ function EmailForm({ onCancel }: { onCancel: () => void }) {
 					disabled={loading}
 					className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-medium transition-colors cursor-pointer"
 				>
-					{loading ? "Enviando..." : "✨ Enviar link mágico"}
+					{loading ? (
+						"Enviando..."
+					) : (
+						<span className="flex items-center justify-center gap-2">
+							<Sparkles size={18} /> Enviar link mágico
+						</span>
+					)}
 				</button>
 			</form>
 			<button

@@ -1,9 +1,16 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import {
+	AlertTriangle,
+	Bot,
+	CheckCircle2,
+	Loader2,
+	Radar,
+	XCircle,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import AuditProgress from "./components/AuditProgress";
-import { CheckCircle2, AlertTriangle, XCircle, Loader2 } from "lucide-react";
 import RecommendationCard from "./components/RecommendationCard";
 import ThemeToggle from "./components/ThemeToggle";
 import UserMenu from "./components/UserMenu";
@@ -99,7 +106,9 @@ export default function Home() {
 				>
 					<div>
 						<h1 className="text-2xl md:text-3xl font-bold dark:text-white text-gray-900">
-							AEO & SEO Radar 📡
+							<span className="flex items-center gap-2">
+								AEO &amp; SEO Radar <Radar size={28} />
+							</span>
 						</h1>
 						<p className="dark:text-gray-400 text-gray-500 mt-1 text-sm md:text-base">
 							Monitoramento e auditoria de presença digital
@@ -305,7 +314,9 @@ export default function Home() {
 											transition={{ duration: 0.4 }}
 										>
 											<h3 className="font-semibold mb-4 text-blue-400">
-												🤖 Recomendações da IA
+												<span className="flex items-center gap-2">
+													<Bot size={20} /> Recomendações da IA
+												</span>
 											</h3>
 											<div className="space-y-3">
 												{currentAudit.recommendations.map((rec, i) => (

@@ -46,7 +46,7 @@ O projeto foi desenvolvido como portfólio técnico, com foco em boas práticas 
 
 ## Screenshots
 
-> _As imagens abaixo referenciam `docs/screenshots/`. Substitua pelos prints reais._
+
 
 <div align="center">
 

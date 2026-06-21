@@ -1,23 +1,23 @@
 <div align="center">
 
-# AEO & SEO Radar 📡
+# AEO & SEO Radar
 
 **Dashboard full stack para monitoramento e auditoria de presença digital**
 
-Analisa domínios, valida dados estruturados (schema markup), audita performance via Google PageSpeed Insights e gera recomendações automáticas com IA.
+Analisa domínios, valida dados estruturados (schema markup), audita performance via Google PageSpeed Insights e gera recomendações automáticas com IA — com detecção de sites renderizados no cliente (CSR).
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=flat-square&logo=node.js)](https://nodejs.org/)
 [![Hono](https://img.shields.io/badge/Hono-4-E36002?style=flat-square&logo=hono)](https://hono.dev/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?style=flat-square&logo=postgresql)](https://www.postgresql.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?style=flat-square&logo=postgresql)](https://www.postgresql.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
 
-[![Deploy](https://img.shields.io/badge/deploy-Vercel-black?style=flat-square&logo=vercel)](https://aeo-seo-radar-web-z33g.vercel.app)
+[![Deploy](https://img.shields.io/badge/deploy-Vercel-black?style=flat-square&logo=vercel)](https://aeo-seo-radar.vercel.app)
 [![API](https://img.shields.io/badge/API-Railway-7B2FBE?style=flat-square&logo=railway)](https://aeo-seo-radarapi-production.up.railway.app/health)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 
-[🚀 Demo ao vivo](https://aeo-seo-radar-web-z33g.vercel.app) · [📡 API Health](https://aeo-seo-radarapi-production.up.railway.app/health)
+[Demo ao vivo](https://aeo-seo-radar.vercel.app) · [API Health](https://aeo-seo-radarapi-production.up.railway.app/health)
 
 </div>
 
@@ -27,21 +27,68 @@ Analisa domínios, valida dados estruturados (schema markup), audita performance
 
 O **AEO & SEO Radar** é um dashboard full stack que permite auditar qualquer domínio em segundos. O sistema coleta dados de múltiplas fontes em paralelo, processa as informações e entrega um relatório completo com scores e recomendações geradas por IA — tudo em uma interface responsiva com suporte a modo claro/escuro.
 
-O projeto foi desenvolvido como portfólio técnico, com foco em boas práticas de arquitetura, tipagem estrita e experiência do usuário.
+O diferencial é o **AEO (Answer Engine Optimization)**: além do SEO tradicional, o projeto analisa o quão preparado um site está para ser entendido e citado por mecanismos de resposta baseados em IA (como ChatGPT, Perplexity e Google AI Overviews), avaliando schema markup (JSON-LD) e Open Graph.
+
+O projeto foi desenvolvido como portfólio técnico, com foco em boas práticas de arquitetura, tipagem estrita, resiliência a falhas, segurança e experiência do usuário.
+
+---
+
+## Para quem é
+
+- **Desenvolvedores** que querem checar a prontidão técnica (schema, performance, estrutura) de um site antes de publicar
+- **Freelancers web** que precisam de um diagnóstico rápido para mostrar a clientes
+- **Donos de sites pequenos** sem orçamento para ferramentas enterprise de SEO/AEO
+- **Estudantes de SEO/AEO** que querem ver na prática como schema markup afeta a visibilidade
+
+> O foco é a **camada técnica** do AEO (estrutura, dados estruturados, performance). Não faz monitoramento de menções de marca em plataformas de IA — isso é escopo das ferramentas enterprise.
+
+---
+
+## Screenshots
+
+> _As imagens abaixo referenciam `docs/screenshots/`. Substitua pelos prints reais._
+
+<div align="center">
+
+### Dashboard (modo claro)
+![Dashboard claro](docs/screenshots/dashboard-light.jpg)
+
+### Dashboard (modo escuro)
+![Dashboard escuro](docs/screenshots/dashboard-dark.jpg)
+
+### Recomendações da IA + detecção de CSR
+![Recomendações](docs/screenshots/recommendations.jpg)
+
+### Tela de login
+![Login](docs/screenshots/login.jpg)
+
+</div>
 
 ---
 
 ## Funcionalidades
 
-- 🔍 **Auditoria de domínios** — análise completa de SEO, AEO, Performance e Score Geral
-- 🤖 **Recomendações via IA** — 5 sugestões práticas geradas pelo Groq (Llama 3.1)
-- 📊 **Schema Markup (AEO)** — detecta JSON-LD, Open Graph e calcula score de Answer Engine Optimization
-- ⚡ **PageSpeed Insights** — integração com a API oficial do Google
-- 🔐 **Autenticação** — login com Google, GitHub e Magic Link (NextAuth v5)
-- 👤 **Histórico por usuário** — cada conta vê apenas suas próprias auditorias
-- 🌙 **Modo claro/escuro** — tema escuro por padrão, alternável pelo usuário
-- 📱 **Responsivo** — interface adaptada para mobile e desktop
-- ✨ **Animações** — transições suaves com Framer Motion
+- **Auditoria de domínios** — análise completa de SEO, AEO, Performance e Score Geral
+- **Recomendações via IA** — 5 sugestões práticas geradas pelo Groq (Llama 3.1), com severidade, impacto, esforço e passos acionáveis
+- **Schema Markup (AEO)** — detecta JSON-LD e Open Graph e calcula score de Answer Engine Optimization
+- **Detecção de CSR** — identifica sites renderizados no cliente (React/Vue/Angular sem SSR) e avisa que a análise pode estar incompleta, explicando como resolver
+- **PageSpeed Insights** — integração com a API oficial do Google
+- **Autenticação** — login com Google, GitHub e Magic Link por email (NextAuth v5)
+- **Histórico por usuário** — cada conta vê apenas suas próprias auditorias
+- **Modo claro/escuro** — alternável pelo usuário, com gradiente e hierarquia visual
+- **Responsivo** — interface adaptada para mobile e desktop
+- **Animações** — transições suaves com Framer Motion
+
+---
+
+## Segurança
+
+- **Rate limiting** — limite de requisições por usuário no endpoint de auditoria (proteção contra abuso e estouro de cota das APIs externas)
+- **Validação anti-SSRF** — bloqueio de URLs internas/privadas (localhost, IPs privados, endpoint de metadata de cloud) em produção, evitando que o servidor seja induzido a acessar recursos internos
+- **Validação de entrada** — schema Zod em todas as entradas; validação de UUID nas rotas de detalhe
+- **Isolamento por usuário** — cada usuário só acessa suas próprias auditorias (prevenção de IDOR)
+- **Autenticação delegada** — sem armazenamento de senhas (OAuth + magic link)
+- **Dependências auditadas** — `npm audit` com correções aplicadas
 
 ---
 
@@ -51,12 +98,13 @@ O projeto foi desenvolvido como portfólio técnico, com foco em boas práticas 
 ┌─────────────────────────────────────────────────────────┐
 │                     Turborepo Monorepo                   │
 ├──────────────────────┬──────────────────────────────────┤
-│   apps/web           │   apps/api                       │
-│   Next.js 16         │   Hono + Node.js                 │
-│   Vercel             │   Railway                        │
+│   apps/web           │   apps/api                        │
+│   Next.js 16         │   Hono + Node.js                  │
+│   Vercel             │   Railway                         │
 ├──────────────────────┴──────────────────────────────────┤
-│                   Neon (PostgreSQL 17)                   │
-│         tabelas: audits · user · account · session       │
+│                   Neon (PostgreSQL)                      │
+│      tabelas: audits · user · account · session ·        │
+│               verificationToken                          │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -66,14 +114,14 @@ O projeto foi desenvolvido como portfólio técnico, com foco em boas práticas 
 POST /api/v1/audits
        │
        ├── PageSpeed Insights API  ─┐
-       │                            ├── paralelo
+       │                            ├── em paralelo (.catch isolado por fonte)
        └── Schema Markup Analysis  ─┘
                     │
-              Groq API (Llama 3.1)
+              Groq API (Llama 3.1) — gera recomendações
                     │
               Salva no Neon
                     │
-         Frontend polling a cada 5s
+       Frontend polling a cada 2s (até completar)
 ```
 
 ---
@@ -82,16 +130,19 @@ POST /api/v1/audits
 
 | Camada | Tecnologia |
 |---|---|
-| Monorepo | Turborepo |
-| Frontend | Next.js 16, TypeScript, Tailwind CSS v4 |
+| Monorepo | Turborepo (npm workspaces) |
+| Frontend | Next.js 16 (Turbopack), TypeScript, Tailwind CSS v4 |
 | Estado | React Query (TanStack Query) |
 | Animações | Framer Motion |
+| Ícones | Lucide React |
 | Backend | Hono, Node.js 20 |
 | ORM | Drizzle ORM |
-| Banco | PostgreSQL 17 (Neon serverless) |
+| Banco | PostgreSQL (Neon serverless) |
 | Auth | NextAuth v5 + @auth/drizzle-adapter |
+| Email (Magic Link) | Gmail SMTP (via Nodemailer) |
 | IA | Groq API (llama-3.1-8b-instant) |
 | SEO | Google PageSpeed Insights API |
+| AEO | Análise própria de schema markup (JSON-LD + Open Graph) |
 | Linter | Biome |
 | Testes | Vitest |
 | CI/CD | GitHub Actions |
@@ -105,9 +156,9 @@ POST /api/v1/audits
 ### Pré-requisitos
 
 - Node.js 20+
-- Docker Desktop
 - Conta no [Groq](https://console.groq.com) (gratuito)
 - Chave da [PageSpeed Insights API](https://developers.google.com/speed/docs/insights/v5/get-started)
+- Um banco PostgreSQL (recomendado: [Neon](https://neon.tech), free tier)
 
 ### Instalação
 
@@ -120,19 +171,9 @@ cd aeo-seo-radar
 npm install
 
 # 3. Configure as variáveis de ambiente
-cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.local.example apps/web/.env.local
-# Preencha as variáveis nos arquivos criados
+# Crie apps/api/.env e apps/web/.env.local (ver seção abaixo)
 
-# 4. Sobe o banco de dados
-docker-compose up postgres -d
-
-# 5. Aplica as migrations
-cd apps/api && npx drizzle-kit push
-cd ../web && npx drizzle-kit push
-
-# 6. Sobe o projeto
-cd ../..
+# 4. Sobe o projeto (frontend + API juntos)
 npm run dev
 ```
 
@@ -169,9 +210,12 @@ AUTH_GOOGLE_ID=...
 AUTH_GOOGLE_SECRET=...
 AUTH_GITHUB_ID=...
 AUTH_GITHUB_SECRET=...
-AUTH_RESEND_KEY=...
+GMAIL_USER=seu-email@gmail.com
+GMAIL_APP_PASSWORD=sua-app-password-de-16-caracteres
 NEXTAUTH_URL=http://localhost:3000
 ```
+
+> O Magic Link usa o SMTP do próprio Gmail (envio autenticado pela conta, o que satisfaz DMARC). Requer uma [App Password](https://myaccount.google.com/apppasswords) gerada com 2FA ativo.
 
 ---
 
@@ -187,12 +231,25 @@ O projeto está configurado para **deploy automático** a cada push na branch `m
 
 ## Destaques Técnicos
 
-- **Monorepo com Turborepo** — compartilhamento de tipos TypeScript entre frontend e backend via `packages/shared`
-- **Polling inteligente** — React Query faz polling a cada 5s e para automaticamente quando a auditoria conclui
-- **Resiliência na auditoria** — cada fonte de dados (PageSpeed, Schema) tem `.catch` isolado, garantindo resultado parcial em vez de falha total
+- **Monorepo com Turborepo** — compartilhamento de tipos TypeScript entre frontend e backend via `packages/shared`, compilado para JS antes dos apps que dependem dele
+- **Polling inteligente** — React Query faz polling a cada 2s e para automaticamente quando a auditoria conclui
+- **Resiliência na auditoria** — cada fonte de dados (PageSpeed, Schema) tem `.catch` isolado, garantindo resultado parcial em vez de falha total; o PageSpeed ainda tem retry direcionado (apenas para erros transitórios)
+- **Detecção de CSR** — heurística combinando volume de texto, presença de containers de framework e razão de scripts, para sinalizar análise potencialmente incompleta em SPAs
+- **Magic Link com template HTML próprio** — email com a marca do projeto, via `sendVerificationRequest` customizado
 - **Lazy initialization do Neon** — conexão criada sob demanda para evitar erros de build no Vercel
-- **Filtragem por usuário** — header `x-user-id` enviado pelo frontend e validado no backend para isolar históricos
+- **Segurança** — rate limiting, validação anti-SSRF consciente de ambiente, isolamento por usuário
 - **Modo escuro como padrão** — `next-themes` com `defaultTheme: dark` e variante CSS customizada para Tailwind v4
+
+---
+
+## Endpoints da API
+
+| Método | Rota | Descrição |
+|---|---|---|
+| POST | `/api/v1/audits` | Inicia uma nova auditoria (com rate limit) |
+| GET | `/api/v1/audits` | Lista auditorias do usuário |
+| GET | `/api/v1/audits/:id` | Detalhe de uma auditoria |
+| GET | `/health` | Health check |
 
 ---
 
@@ -200,10 +257,9 @@ O projeto está configurado para **deploy automático** a cada push na branch `m
 
 **Douglas Salazar**
 - GitHub: [@Doug1980](https://github.com/Doug1980)
-- Email: douglas.dev.salazar@gmail.com
 
 ---
 
 ## Licença
 
-Este projeto está sob a licença [MIT](LICENSE).
+[MIT](LICENSE)

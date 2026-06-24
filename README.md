@@ -68,13 +68,14 @@ O projeto foi desenvolvido como portfólio técnico, com foco em boas práticas 
 
 ## Funcionalidades
 
-- **Auditoria de domínios** — análise completa de SEO, AEO, Performance e Score Geral
+- **Auditoria de domínios** — seis scores num só relatório: Geral, SEO, AEO, Performance, Acessibilidade e Boas Práticas
+- **Core Web Vitals** — LCP, TTFB, TBT/FID e CLS coletados via PageSpeed e exibidos no dashboard
 - **Recomendações via IA** — até 8 sugestões práticas geradas pelo Groq (Llama 3.3 70B), com severidade, impacto, esforço e passos acionáveis
 - **Schema Markup (AEO)** — detecta JSON-LD e Open Graph e calcula score de Answer Engine Optimization
 - **Detecção de CSR** — identifica sites renderizados no cliente (React/Vue/Angular sem SSR) e avisa que a análise pode estar incompleta, explicando como resolver
 - **PageSpeed Insights** — integração com a API oficial do Google
 - **Autenticação** — login com Google, GitHub e Magic Link por email (NextAuth v5)
-- **Histórico por usuário** — cada conta vê apenas suas próprias auditorias
+- **Histórico paginado por usuário** — cada conta vê apenas suas próprias auditorias, com paginação por "Carregar mais"
 - **Modo claro/escuro** — alternável pelo usuário, com gradiente e hierarquia visual
 - **Responsivo** — interface adaptada para mobile e desktop
 - **Animações** — transições suaves com Framer Motion
@@ -235,7 +236,8 @@ O projeto está configurado para **deploy automático** a cada push na branch `m
 ## Destaques Técnicos
 
 - **Monorepo com Turborepo** — compartilhamento de tipos TypeScript entre frontend e backend via `packages/shared`, compilado para JS antes dos apps que dependem dele
-- **Polling inteligente** — React Query faz polling a cada 2s e para automaticamente quando a auditoria conclui
+- **Polling resiliente** — React Query faz polling a cada 2s, para sozinho ao concluir e tem cap baseado na idade real da auditoria (`createdAt`); auditorias presas em "running" (ex.: restart no meio do job) viram "failed" automaticamente via lazy stale check
+- **Histórico paginado** — `useInfiniteQuery` no front + paginação por offset na API, que busca `limit+1` para descobrir se há próxima página sem um `COUNT` extra
 - **Resiliência na auditoria** — cada fonte de dados (PageSpeed, Schema) tem `.catch` isolado, garantindo resultado parcial em vez de falha total; o PageSpeed ainda tem retry direcionado (apenas para erros transitórios)
 - **Detecção de CSR** — heurística combinando volume de texto, presença de containers de framework e razão de scripts, para sinalizar análise potencialmente incompleta em SPAs
 - **Magic Link com template HTML próprio** — email com a marca do projeto, via `sendVerificationRequest` customizado
@@ -250,7 +252,7 @@ O projeto está configurado para **deploy automático** a cada push na branch `m
 | Método | Rota | Descrição |
 |---|---|---|
 | POST | `/api/v1/audits` | Inicia uma nova auditoria (com rate limit) |
-| GET | `/api/v1/audits` | Lista auditorias do usuário |
+| GET | `/api/v1/audits` | Lista auditorias do usuário (paginado: `?limit` até 50, `?offset`) |
 | GET | `/api/v1/audits/:id` | Detalhe de uma auditoria |
 | GET | `/health` | Health check |
 

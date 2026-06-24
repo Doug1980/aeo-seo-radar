@@ -69,7 +69,7 @@ O projeto foi desenvolvido como portfólio técnico, com foco em boas práticas 
 ## Funcionalidades
 
 - **Auditoria de domínios** — análise completa de SEO, AEO, Performance e Score Geral
-- **Recomendações via IA** — 5 sugestões práticas geradas pelo Groq (Llama 3.1), com severidade, impacto, esforço e passos acionáveis
+- **Recomendações via IA** — até 8 sugestões práticas geradas pelo Groq (Llama 3.3 70B), com severidade, impacto, esforço e passos acionáveis
 - **Schema Markup (AEO)** — detecta JSON-LD e Open Graph e calcula score de Answer Engine Optimization
 - **Detecção de CSR** — identifica sites renderizados no cliente (React/Vue/Angular sem SSR) e avisa que a análise pode estar incompleta, explicando como resolver
 - **PageSpeed Insights** — integração com a API oficial do Google
@@ -84,9 +84,10 @@ O projeto foi desenvolvido como portfólio técnico, com foco em boas práticas 
 ## Segurança
 
 - **Rate limiting** — limite de requisições por usuário no endpoint de auditoria (proteção contra abuso e estouro de cota das APIs externas)
-- **Validação anti-SSRF** — bloqueio de URLs internas/privadas (localhost, IPs privados, endpoint de metadata de cloud) em produção, evitando que o servidor seja induzido a acessar recursos internos
+- **Validação anti-SSRF** — bloqueio de URLs internas/privadas (localhost, IPs privados, endpoint de metadata de cloud) em produção, com **resolução de DNS** do host antes de buscar (fecha a brecha de DNS rebinding, em que um domínio público resolve para um IP interno)
 - **Validação de entrada** — schema Zod em todas as entradas; validação de UUID nas rotas de detalhe
-- **Isolamento por usuário** — cada usuário só acessa suas próprias auditorias (prevenção de IDOR)
+- **Autenticação da API via JWT** — o front assina um JWT curto (15 min) a partir da sessão NextAuth, com segredo compartilhado (`AUTH_API_SECRET`); a API valida assinatura e expiração. Substitui o antigo header `x-user-id`, que era falsificável
+- **Isolamento por usuário** — cada usuário só acessa suas próprias auditorias, identificado pelo `sub` do JWT (prevenção de IDOR)
 - **Autenticação delegada** — sem armazenamento de senhas (OAuth + magic link)
 - **Dependências auditadas** — `npm audit` com correções aplicadas
 
@@ -117,7 +118,7 @@ POST /api/v1/audits
        │                            ├── em paralelo (.catch isolado por fonte)
        └── Schema Markup Analysis  ─┘
                     │
-              Groq API (Llama 3.1) — gera recomendações
+              Groq API (Llama 3.3 70B) — gera recomendações
                     │
               Salva no Neon
                     │
@@ -140,7 +141,7 @@ POST /api/v1/audits
 | Banco | PostgreSQL (Neon serverless) |
 | Auth | NextAuth v5 + @auth/drizzle-adapter |
 | Email (Magic Link) | Gmail SMTP (via Nodemailer) |
-| IA | Groq API (llama-3.1-8b-instant) |
+| IA | Groq API (llama-3.3-70b-versatile) |
 | SEO | Google PageSpeed Insights API |
 | AEO | Análise própria de schema markup (JSON-LD + Open Graph) |
 | Linter | Biome |
@@ -198,6 +199,7 @@ FRONTEND_URL=http://localhost:3000
 DATABASE_URL=postgresql://...
 PAGESPEED_API_KEY=...
 GROQ_API_KEY=...
+AUTH_API_SECRET=...   # mesmo segredo do front (assina/verifica o JWT)
 ```
 
 ### `apps/web/.env.local`
@@ -213,6 +215,7 @@ AUTH_GITHUB_SECRET=...
 GMAIL_USER=seu-email@gmail.com
 GMAIL_APP_PASSWORD=sua-app-password-de-16-caracteres
 NEXTAUTH_URL=http://localhost:3000
+AUTH_API_SECRET=...   # mesmo segredo da API (assina o JWT da sessão)
 ```
 
 > O Magic Link usa o SMTP do próprio Gmail (envio autenticado pela conta, o que satisfaz DMARC). Requer uma [App Password](https://myaccount.google.com/apppasswords) gerada com 2FA ativo.

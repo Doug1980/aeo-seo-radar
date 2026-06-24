@@ -1,5 +1,10 @@
 import type { ApiResponse, DomainAudit } from "@aeo-seo-radar/shared";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useInfiniteQuery,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { apiFetch } from "../lib/api";
 
@@ -7,19 +12,38 @@ import { apiFetch } from "../lib/api";
 // (a API também marca audits "running" antigos como "failed").
 const POLL_MAX_MS = 3 * 60_000;
 
+const HISTORY_PAGE_SIZE = 20;
+
+/**
+ * Histórico paginado por offset. Cada página traz até HISTORY_PAGE_SIZE itens
+ * e um `hasMore` da API; as páginas são achatadas num único array (`audits`).
+ */
 export function useAuditHistory() {
 	const { data: session } = useSession();
 	const userId = session?.user?.email ?? null;
-	return useQuery<DomainAudit[]>({
+
+	const query = useInfiniteQuery({
 		queryKey: ["audit-history", userId],
-		queryFn: async () => {
-			const res = await apiFetch("/api/v1/audits");
-			if (!res.ok) throw new Error("Erro ao buscar histórico");
-			const body = await res.json();
-			return body.data;
-		},
 		enabled: !!userId,
+		initialPageParam: 0,
+		queryFn: async ({ pageParam }) => {
+			const res = await apiFetch(
+				`/api/v1/audits?limit=${HISTORY_PAGE_SIZE}&offset=${pageParam}`,
+			);
+			if (!res.ok) throw new Error("Erro ao buscar histórico");
+			return (await res.json()) as ApiResponse<DomainAudit[]>;
+		},
+		getNextPageParam: (lastPage, allPages) =>
+			lastPage.hasMore ? allPages.length * HISTORY_PAGE_SIZE : undefined,
 	});
+
+	return {
+		audits: query.data?.pages.flatMap((p) => p.data),
+		isLoading: query.isLoading,
+		hasNextPage: query.hasNextPage,
+		fetchNextPage: query.fetchNextPage,
+		isFetchingNextPage: query.isFetchingNextPage,
+	};
 }
 
 export function useAuditById(

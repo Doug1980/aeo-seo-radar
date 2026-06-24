@@ -84,6 +84,8 @@ export async function startBackgroundAudit(
 			aeo: schemaResult.score,
 			performance: ps.performance,
 			schemaMarkup: schemaResult.score,
+			accessibility: ps.accessibility,
+			bestPractices: ps.bestPractices,
 		};
 
 		// Core Web Vitals só existem quando o PageSpeed respondeu

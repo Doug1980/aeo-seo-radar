@@ -1,5 +1,4 @@
-// apps/api/src/db/schema.ts
-import type { Recommendation } from "@aeo-seo-radar/shared";
+import type { AuditMetrics, Recommendation } from "@aeo-seo-radar/shared";
 import {
 	jsonb,
 	pgEnum,
@@ -30,6 +29,7 @@ export const audits = pgTable("audits", {
 	domain: text("domain").notNull(),
 	status: auditStatusEnum("status").notNull().default("pending"),
 	scores: jsonb("scores").$type<AuditScores>(),
+	metrics: jsonb("metrics").$type<AuditMetrics>(),
 	recommendations: jsonb("recommendations")
 		.$type<Recommendation[]>()
 		.notNull()

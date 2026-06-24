@@ -35,6 +35,40 @@ function aeoHint(aeo?: number) {
 	return null;
 }
 
+function formatSeconds(ms: number) {
+	return `${(ms / 1000).toFixed(2)} s`;
+}
+
+function buildMetricItems(metrics: {
+	lcp: number;
+	fid: number;
+	cls: number;
+	ttfb: number;
+}) {
+	return [
+		{
+			label: "LCP",
+			value: formatSeconds(metrics.lcp),
+			hint: "Largest Contentful Paint",
+		},
+		{
+			label: "TTFB",
+			value: `${Math.round(metrics.ttfb)} ms`,
+			hint: "Time To First Byte",
+		},
+		{
+			label: "TBT/FID",
+			value: `${Math.round(metrics.fid)} ms`,
+			hint: "Bloqueio do main thread",
+		},
+		{
+			label: "CLS",
+			value: metrics.cls.toFixed(3),
+			hint: "Cumulative Layout Shift",
+		},
+	];
+}
+
 function formatDate(iso: string) {
 	return new Intl.DateTimeFormat("pt-BR", {
 		year: "numeric",
@@ -284,6 +318,36 @@ export default function Home() {
 											transition={{ delay: 0.3 }}
 										>
 											{aeoHint(currentAudit.scores?.aeo)}
+										</motion.div>
+									)}
+
+								{currentAudit.status === "completed" &&
+									currentAudit.metrics && (
+										<motion.div
+											className="mt-4"
+											initial={{ opacity: 0 }}
+											animate={{ opacity: 1 }}
+											transition={{ delay: 0.3 }}
+										>
+											<p className="text-xs dark:text-gray-500 text-gray-400 mb-2">
+												Core Web Vitals (mobile)
+											</p>
+											<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+												{buildMetricItems(currentAudit.metrics).map((m) => (
+													<div
+														key={m.label}
+														title={m.hint}
+														className="dark:bg-gray-800 bg-gray-100 dark:border-gray-700 border-gray-200 border rounded-lg px-3 py-2 text-center"
+													>
+														<p className="text-[11px] dark:text-gray-500 text-gray-400">
+															{m.label}
+														</p>
+														<p className="text-base font-semibold dark:text-white text-gray-900">
+															{m.value}
+														</p>
+													</div>
+												))}
+											</div>
 										</motion.div>
 									)}
 							</div>

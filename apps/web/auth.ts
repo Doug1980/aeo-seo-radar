@@ -59,6 +59,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 			if (isOnLogin) return true;
 			return isLoggedIn;
 		},
+		// Garante que o id estável do usuário (não o e-mail) esteja na sessão,
+		// para ser usado como `sub` do JWT enviado à API.
+		session({ session, user }) {
+			if (session.user && user?.id) {
+				session.user.id = user.id;
+			}
+			return session;
+		},
 	},
 });
 

@@ -45,6 +45,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Compila o pacote compartilhado (gera dist/index.d.ts e index.js),
+      # do qual a API depende para type check e testes.
+      - name: Build shared package
+        run: npm run build --workspace=@aeo-seo-radar/shared
+
       # Aplica as migrations versionadas no Postgres de teste (cria a tabela audits + enum)
       - name: Run database migrations
         run: npm run db:migrate

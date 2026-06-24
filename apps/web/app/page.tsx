@@ -126,6 +126,8 @@ export default function Home() {
 		{ label: "SEO", value: currentAudit?.scores?.seo },
 		{ label: "AEO", value: currentAudit?.scores?.aeo },
 		{ label: "Performance", value: currentAudit?.scores?.performance },
+		{ label: "Acessibilidade", value: currentAudit?.scores?.accessibility },
+		{ label: "Boas Práticas", value: currentAudit?.scores?.bestPractices },
 	];
 
 	return (
@@ -187,13 +189,15 @@ export default function Home() {
 				</motion.div>
 
 				{/* Cards de Score */}
-				<div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
 					{scores.map((card, index) => {
 						const psDown = isPageSpeedUnavailable(currentAudit?.scores);
 						const dependsOnPageSpeed = [
 							"SEO",
 							"Performance",
 							"Score Geral",
+							"Acessibilidade",
+							"Boas Práticas",
 						].includes(card.label);
 						const showNA = psDown && dependsOnPageSpeed;
 

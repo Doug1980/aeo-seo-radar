@@ -21,6 +21,8 @@ export interface AuditScores {
 	performance: number;
 	schemaMarkup: number;
 	overall: number;
+	accessibility?: number;
+	bestPractices?: number;
 }
 
 export const audits = pgTable("audits", {

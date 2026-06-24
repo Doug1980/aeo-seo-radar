@@ -33,6 +33,9 @@ export interface AuditScores {
 	aeo: number;
 	performance: number;
 	schemaMarkup: number;
+	// Opcionais: auditorias antigas (anteriores a esta feature) não os têm.
+	accessibility?: number;
+	bestPractices?: number;
 }
 
 /**

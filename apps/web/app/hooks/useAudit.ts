@@ -1,7 +1,6 @@
 import type { ApiResponse, DomainAudit } from "@aeo-seo-radar/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { useRef } from "react";
 import { apiFetch } from "../lib/api";
 
 // Cap absoluto de polling: se a auditoria não concluir nesse tempo, paramos
@@ -30,7 +29,6 @@ export function useAuditById(
 ) {
 	const { data: session } = useSession();
 	const userId = session?.user?.email ?? null;
-	const startedAt = useRef<number>(Date.now());
 
 	return useQuery<DomainAudit>({
 		queryKey: ["audit", id, userId],
@@ -39,20 +37,28 @@ export function useAuditById(
 			if (!res.ok) throw new Error("Erro ao buscar auditoria");
 			const body = await res.json();
 			const data: DomainAudit = body.data;
-			const isDone =
-				(data.status === "completed" &&
-					(data.recommendations?.length ?? 0) > 0) ||
-				data.status === "failed";
-			if (isDone) onDone?.();
+			// Concluiu (ou falhou) → para o polling. As recomendações já vêm
+			// no mesmo payload do status "completed", então não exigimos que
+			// a lista esteja preenchida (evita travar se a IA retornar vazio).
+			if (data.status === "completed" || data.status === "failed") {
+				onDone?.();
+			}
 			return data;
 		},
 		enabled: !!id && !!userId,
 		refetchOnWindowFocus: false,
 		refetchInterval: (query) => {
 			if (!enablePolling) return false;
-			const status = query.state.data?.status;
-			if (status === "completed" || status === "failed") return false;
-			if (Date.now() - startedAt.current > POLL_MAX_MS) return false;
+			const data = query.state.data;
+			if (!data) return 2000;
+			if (data.status === "completed" || data.status === "failed") {
+				return false;
+			}
+			// Cap baseado na idade REAL da auditoria (createdAt), não no tempo
+			// que a tela está aberta — senão o polling nem começa se a aba já
+			// estava aberta há mais que o limite.
+			const ageMs = Date.now() - new Date(data.createdAt).getTime();
+			if (ageMs > POLL_MAX_MS) return false;
 			return 2000;
 		},
 	});

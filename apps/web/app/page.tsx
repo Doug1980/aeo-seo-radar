@@ -119,6 +119,9 @@ export default function Home() {
 		selectedAuditId,
 		selectAudit,
 		startAudit,
+		hasNextPage,
+		fetchNextPage,
+		isFetchingNextPage,
 	} = useAuditFlow();
 
 	const scores = [
@@ -465,6 +468,17 @@ export default function Home() {
 									</motion.div>
 								))}
 							</div>
+
+							{hasNextPage && (
+								<button
+									type="button"
+									onClick={fetchNextPage}
+									disabled={isFetchingNextPage}
+									className="mt-4 w-full text-sm font-medium rounded-lg py-2.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 bg-gray-100 dark:hover:bg-gray-700 hover:bg-gray-200 dark:text-gray-200 text-gray-700"
+								>
+									{isFetchingNextPage ? "Carregando..." : "Carregar mais"}
+								</button>
+							)}
 						</motion.div>
 					)}
 				</AnimatePresence>

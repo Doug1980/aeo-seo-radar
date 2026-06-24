@@ -65,6 +65,8 @@ export interface DomainAudit {
 export interface ApiResponse<T> {
 	data: T;
 	message?: string;
+	// Presente na listagem paginada: indica se há mais páginas após esta.
+	hasMore?: boolean;
 }
 
 export interface ApiError {

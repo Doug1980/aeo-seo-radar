@@ -106,6 +106,16 @@ describe("GET /api/v1/audits", () => {
 
 		expect(body.data.length).toBeLessThanOrEqual(20);
 	});
+
+	it("respeita o parametro limit", async () => {
+		const res = await app.request("/api/v1/audits?limit=1", {
+			headers: authHeaders,
+		});
+		const body = await res.json();
+
+		expect(res.status).toBe(200);
+		expect(body.data.length).toBeLessThanOrEqual(1);
+	});
 });
 
 describe("GET /api/v1/audits/:id", () => {

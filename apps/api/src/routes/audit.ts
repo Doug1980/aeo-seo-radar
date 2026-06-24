@@ -169,17 +169,32 @@ auditRoutes.post(
 	},
 );
 
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 50;
+
 auditRoutes.get("/", async (c) => {
 	const userId = c.get("userId");
 
-	const allAudits = await db.query.audits.findMany({
+	// Paginação por offset. Busca limit+1 para saber se há próxima página
+	// sem precisar de um COUNT separado.
+	const limit = Math.min(
+		Math.max(Number(c.req.query("limit")) || DEFAULT_LIMIT, 1),
+		MAX_LIMIT,
+	);
+	const offset = Math.max(Number(c.req.query("offset")) || 0, 0);
+
+	const rows = await db.query.audits.findMany({
 		where: eq(audits.userId, userId),
 		orderBy: [desc(audits.createdAt)],
-		limit: 20,
+		limit: limit + 1,
+		offset,
 	});
 
+	const hasMore = rows.length > limit;
+	const pageRows = hasMore ? rows.slice(0, limit) : rows;
+
 	// Marca como "failed" os audits "running" antigos (presos por um restart)
-	const staleIds = allAudits.filter(isStaleRunning).map((a) => a.id);
+	const staleIds = pageRows.filter(isStaleRunning).map((a) => a.id);
 	if (staleIds.length > 0) {
 		await db
 			.update(audits)
@@ -189,11 +204,12 @@ auditRoutes.get("/", async (c) => {
 
 	const staleSet = new Set(staleIds);
 	const response: ApiResponse<DomainAudit[]> = {
-		data: allAudits.map((a) =>
+		data: pageRows.map((a) =>
 			staleSet.has(a.id)
 				? toAuditResponse({ ...a, status: "failed" })
 				: toAuditResponse(a),
 		),
+		hasMore,
 	};
 
 	return c.json(response);

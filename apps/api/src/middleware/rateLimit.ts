@@ -1,5 +1,6 @@
 // apps/api/src/middleware/rateLimit.ts
 import type { Context, Next } from "hono";
+import type { AuthEnv } from "./auth.js";
 
 /**
  * Rate limiting simples em memória.
@@ -39,9 +40,10 @@ setInterval(() => {
 export function rateLimit(options: RateLimitOptions) {
 	const { windowMs, max } = options;
 
-	return async (c: Context, next: Next) => {
-		// Identifica o usuário; sem header, cai num bucket genérico por segurança
-		const userId = c.req.header("x-user-id") ?? "anonymous";
+	return async (c: Context<AuthEnv>, next: Next) => {
+		// Identifica o usuário autenticado (setado por requireAuth).
+		// Fallback defensivo para um bucket genérico, caso seja usado sem auth.
+		const userId = c.get("userId") ?? "anonymous";
 		const now = Date.now();
 
 		const entry = store.get(userId);

@@ -86,6 +86,16 @@ export async function startBackgroundAudit(
 			schemaMarkup: schemaResult.score,
 		};
 
+		// Core Web Vitals só existem quando o PageSpeed respondeu
+		const metrics = pageSpeedResult
+			? {
+					lcp: pageSpeedResult.lcp,
+					fid: pageSpeedResult.fid,
+					cls: pageSpeedResult.cls,
+					ttfb: pageSpeedResult.ttfb,
+				}
+			: null;
+
 		let recommendations: Recommendation[] = [];
 		try {
 			recommendations = await generateRecommendations(domain, scores);
@@ -104,6 +114,7 @@ export async function startBackgroundAudit(
 				status: "completed",
 				completedAt: new Date(),
 				scores,
+				metrics,
 				recommendations,
 			})
 			.where(eq(audits.id, auditId));

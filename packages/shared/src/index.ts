@@ -35,6 +35,17 @@ export interface AuditScores {
 	schemaMarkup: number;
 }
 
+/**
+ * Core Web Vitals coletados via PageSpeed Insights.
+ * lcp/ttfb em ms, fid (max-potential-fid / TBT) em ms, cls adimensional.
+ */
+export interface AuditMetrics {
+	lcp: number;
+	fid: number;
+	cls: number;
+	ttfb: number;
+}
+
 export interface DomainAudit {
 	id: string;
 	domain: string;
@@ -42,7 +53,8 @@ export interface DomainAudit {
 	createdAt: string;
 	completedAt?: string;
 	scores: AuditScores;
-	recommendations: Recommendation[]; // era string[]?
+	metrics?: AuditMetrics;
+	recommendations: Recommendation[];
 }
 
 // ─── API envelope ───────────────────────────────────────────────

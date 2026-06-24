@@ -22,6 +22,13 @@
       "when": 1780574914405,
       "tag": "0002_add_metrics",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1780575014405,
+      "tag": "0003_add_user_id",
+      "breakpoints": true
     }
   ]
 }

@@ -84,6 +84,16 @@ function formatDate(iso: string) {
 	}).format(new Date(iso));
 }
 
+// Favicon do site auditado, via serviço do Google (não exige backend).
+function faviconFor(domain: string) {
+	try {
+		const host = new URL(domain).hostname;
+		return `https://www.google.com/s2/favicons?domain=${host}&sz=64`;
+	} catch {
+		return null;
+	}
+}
+
 function AnimatedScore({ value }: { value: number }) {
 	const [display, setDisplay] = useState(0);
 
@@ -445,11 +455,27 @@ export default function Home() {
 										whileHover={{ scale: 1.01 }}
 										whileTap={{ scale: 0.99 }}
 									>
-										<div className="min-w-0 flex-1">
-											<p className="text-sm text-text truncate">{item.domain}</p>
-											<p className="text-xs text-muted">
-												{formatDate(item.createdAt)}
-											</p>
+										<div className="flex items-center gap-3 min-w-0 flex-1">
+											{/* eslint-disable-next-line @next/next/no-img-element */}
+											<img
+												src={faviconFor(item.domain) ?? ""}
+												alt=""
+												width={20}
+												height={20}
+												loading="lazy"
+												className="h-5 w-5 rounded shrink-0 bg-surface-inset object-contain"
+												onError={(e) => {
+													e.currentTarget.style.visibility = "hidden";
+												}}
+											/>
+											<div className="min-w-0">
+												<p className="text-sm text-text truncate">
+													{item.domain}
+												</p>
+												<p className="text-xs text-muted">
+													{formatDate(item.createdAt)}
+												</p>
+											</div>
 										</div>
 										<div className="flex items-center gap-2 shrink-0">
 											<span

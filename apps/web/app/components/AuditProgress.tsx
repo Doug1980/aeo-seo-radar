@@ -26,8 +26,8 @@ export default function AuditProgress() {
 	const Icon = current.icon;
 
 	return (
-		<p className="text-sm font-medium dark:text-gray-300 text-gray-700 mb-4 flex items-center gap-2 transition-opacity">
-			<Icon size={16} className="text-blue-500 animate-pulse" />
+		<p className="text-sm font-medium text-muted mb-4 flex items-center gap-2 transition-opacity">
+			<Icon size={16} className="text-accent animate-pulse" />
 			{current.text}
 		</p>
 	);

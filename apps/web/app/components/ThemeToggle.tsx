@@ -19,7 +19,7 @@ export default function ThemeToggle() {
 		<button
 			type="button"
 			onClick={() => setTheme(isDark ? "light" : "dark")}
-			className="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 transition-colors cursor-pointer"
+			className="flex items-center justify-center w-9 h-9 rounded-lg border border-border bg-surface-inset text-text hover:opacity-90 transition-colors cursor-pointer"
 			title={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
 		>
 			{isDark ? (

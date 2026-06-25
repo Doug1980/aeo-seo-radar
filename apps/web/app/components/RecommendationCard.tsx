@@ -14,8 +14,8 @@ const severityConfig = {
 // (ex.: auditorias antigas em formato string, ou alucinação do LLM).
 const fallbackSeverity = {
 	label: "Sugestão",
-	dot: "bg-gray-400",
-	text: "text-gray-400",
+	dot: "bg-muted",
+	text: "text-muted",
 } as const;
 
 const categoryLabel: Record<string, string> = {
@@ -62,29 +62,27 @@ export default function RecommendationCard({
 			initial={{ opacity: 0, y: 10 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ duration: 0.3, delay: index * 0.08 }}
-			className="rounded-lg border dark:border-gray-700 border-gray-200 dark:bg-gray-800/50 bg-gray-50 p-4"
+			className="rounded-lg border border-border bg-surface-inset p-4"
 		>
 			<div className="flex items-start gap-3">
 				<span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${s.dot}`} />
 				<div className="min-w-0 flex-1">
-					<h4 className="font-medium dark:text-white text-gray-900">
+					<h4 className="font-medium text-text">
 						{rec.title ?? "Recomendação"}
 					</h4>
 					{rec.description && (
-						<p className="mt-1 text-sm dark:text-gray-400 text-gray-600">
-							{rec.description}
-						</p>
+						<p className="mt-1 text-sm text-muted">{rec.description}</p>
 					)}
 
 					<div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
 						<span className={`font-medium ${s.text}`}>{s.label}</span>
-						<span className="rounded px-2 py-0.5 dark:bg-gray-700 bg-gray-200 dark:text-gray-300 text-gray-600">
+						<span className="rounded px-2 py-0.5 bg-surface-raised text-muted">
 							{category}
 						</span>
-						<span className="rounded px-2 py-0.5 dark:bg-gray-700 bg-gray-200 dark:text-gray-300 text-gray-600">
+						<span className="rounded px-2 py-0.5 bg-surface-raised text-muted">
 							Impacto: {impact}
 						</span>
-						<span className="rounded px-2 py-0.5 dark:bg-gray-700 bg-gray-200 dark:text-gray-300 text-gray-600">
+						<span className="rounded px-2 py-0.5 bg-surface-raised text-muted">
 							Esforço: {effort}
 						</span>
 					</div>
@@ -94,7 +92,7 @@ export default function RecommendationCard({
 							<button
 								type="button"
 								onClick={() => setOpen((v) => !v)}
-								className="mt-3 flex items-center gap-1 text-sm font-medium dark:text-gray-300 text-gray-700 hover:text-blue-400 cursor-pointer"
+								className="mt-3 flex items-center gap-1 text-sm font-medium text-muted hover:text-highlight cursor-pointer"
 							>
 								{steps.length} {steps.length === 1 ? "passo" : "passos"}
 								<span
@@ -107,7 +105,7 @@ export default function RecommendationCard({
 							<motion.ol
 								initial={false}
 								animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
-								className="list-decimal space-y-1.5 overflow-hidden pl-5 text-sm dark:text-gray-400 text-gray-600"
+								className="list-decimal space-y-1.5 overflow-hidden pl-5 text-sm text-muted"
 							>
 								{steps.map((step, i) => (
 									<li key={i} className="pt-2 first:pt-3">

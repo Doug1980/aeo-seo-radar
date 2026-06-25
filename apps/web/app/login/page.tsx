@@ -12,7 +12,7 @@ export default function LoginPage() {
 	const [showEmailForm, setShowEmailForm] = useState(false);
 
 	return (
-		<main className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-blue-950 text-white flex items-center justify-center px-4 py-12">
+		<main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white flex items-center justify-center px-4 py-12">
 			<Toaster position="top-center" theme="dark" richColors />
 			<div className="w-full max-w-md mb-6">
 				{/* Logo / Header fora do card */}
@@ -141,8 +141,8 @@ export default function LoginPage() {
 				</div>
 
 				{/* Card */}
-				<div className="bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 shadow-2xl">
-					<p className="text-center text-gray-400 text-sm mb-6">
+				<div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-2xl p-8 shadow-2xl">
+					<p className="text-center text-slate-400 text-sm mb-6">
 						Entre para acessar o dashboar{" "}
 					</p>
 
@@ -159,19 +159,19 @@ export default function LoginPage() {
 						<button
 							type="button"
 							onClick={() => signIn("github", { callbackUrl: "/" })}
-							className="w-full flex items-center justify-center gap-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 font-medium py-3 rounded-xl transition-colors cursor-pointer"
+							className="w-full flex items-center justify-center gap-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 font-medium py-3 rounded-xl transition-colors cursor-pointer"
 						>
 							<FaGithub size={20} />
 							Entrar com GitHub
 						</button>
 					</div>
 
-					<div className="mt-6 pt-6 border-t border-gray-800">
+					<div className="mt-6 pt-6 border-t border-slate-800">
 						{!showEmailForm ? (
 							<button
 								type="button"
 								onClick={() => setShowEmailForm(true)}
-								className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 hover:text-white font-medium py-3 rounded-xl transition-colors cursor-pointer"
+								className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white font-medium py-3 rounded-xl transition-colors cursor-pointer"
 							>
 								<MdEmail size={20} />
 								Entrar com seu melhor e-mail
@@ -183,7 +183,7 @@ export default function LoginPage() {
 				</div>
 
 				{/* Footer */}
-				<p className="text-center text-gray-600 text-xs mt-6">
+				<p className="text-center text-slate-500 text-xs mt-6">
 					Ao entrar, você concorda com nossos termos de uso.
 				</p>
 			</div>
@@ -229,16 +229,16 @@ function EmailForm({ onCancel }: { onCancel: () => void }) {
 				</div>
 				<div>
 					<h3 className="text-white font-medium text-lg">Email enviado!</h3>
-					<p className="text-gray-400 text-sm mt-1">
+					<p className="text-slate-400 text-sm mt-1">
 						Link de acesso enviado para{" "}
-						<span className="text-gray-200">{email}</span>. Verifique sua caixa
+						<span className="text-slate-200">{email}</span>. Verifique sua caixa
 						de entrada para continuar.
 					</p>
 				</div>
 				<button
 					type="button"
 					onClick={onCancel}
-					className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 hover:text-white font-medium py-3 rounded-xl transition-colors cursor-pointer"
+					className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white font-medium py-3 rounded-xl transition-colors cursor-pointer"
 				>
 					Voltar
 				</button>
@@ -249,7 +249,7 @@ function EmailForm({ onCancel }: { onCancel: () => void }) {
 	// Tela do formulário — padrão
 	return (
 		<div className="space-y-3">
-			<p className="text-gray-500 text-sm mb-3">
+			<p className="text-slate-400 text-sm mb-3">
 				Digite seu email para receber o link
 			</p>
 			<form onSubmit={handleSubmit} className="flex flex-col gap-2">
@@ -259,7 +259,7 @@ function EmailForm({ onCancel }: { onCancel: () => void }) {
 					onChange={(e) => setEmail(e.target.value)}
 					placeholder="seu@email.com"
 					required
-					className="bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+					className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
 				/>
 				<button
 					type="submit"
@@ -278,7 +278,7 @@ function EmailForm({ onCancel }: { onCancel: () => void }) {
 			<button
 				type="button"
 				onClick={onCancel}
-				className="w-full text-gray-600 hover:text-gray-400 text-xs transition-colors cursor-pointer mt-1"
+				className="w-full text-slate-500 hover:text-slate-400 text-xs transition-colors cursor-pointer mt-1"
 			>
 				Voltar
 			</button>

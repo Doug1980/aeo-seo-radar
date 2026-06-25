@@ -16,6 +16,10 @@ import ThemeToggle from "./components/ThemeToggle";
 import UserMenu from "./components/UserMenu";
 import { useAuditFlow } from "./hooks/useAuditFlow";
 
+// Classe base dos cards/painéis — elevação + cantos do novo visual.
+const CARD =
+	"bg-surface-raised border border-border rounded-2xl shadow-lg shadow-black/5 dark:shadow-black/30";
+
 function ScoreColor(score: number) {
 	if (score >= 90) return "text-green-400";
 	if (score >= 50) return "text-yellow-400";
@@ -134,7 +138,13 @@ export default function Home() {
 	];
 
 	return (
-		<main className="min-h-screen bg-surface text-text px-4 py-6 md:p-8">
+		<main
+			className="min-h-screen bg-surface text-text px-4 py-6 md:p-8"
+			style={{
+				background:
+					"radial-gradient(900px 420px at 50% -8%, rgba(59,130,246,0.16), transparent 70%), var(--surface)",
+			}}
+		>
 			<div className="max-w-5xl mx-auto">
 				{/* Header */}
 				<motion.div
@@ -144,9 +154,12 @@ export default function Home() {
 					transition={{ duration: 0.4 }}
 				>
 					<div>
-						<h1 className="text-2xl md:text-3xl font-bold text-text">
+						<h1 className="text-3xl md:text-4xl font-bold tracking-tight">
 							<span className="flex items-center gap-2">
-								AEO &amp; SEO Radar <Radar size={28} />
+								<span className="bg-gradient-to-r from-slate-900 to-blue-600 dark:from-white dark:to-blue-300 bg-clip-text text-transparent">
+									AEO &amp; SEO Radar
+								</span>
+								<Radar size={30} className="text-accent" />
 							</span>
 						</h1>
 						<p className="text-muted mt-1 text-sm md:text-base">
@@ -161,7 +174,7 @@ export default function Home() {
 
 				{/* Nova Auditoria */}
 				<motion.div
-					className="bg-surface-raised rounded-xl shadow-sm dark:shadow-none p-4 md:p-6 mb-6 border border-border"
+					className={`${CARD} p-4 md:p-6 mb-6`}
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.4, delay: 0.1 }}
@@ -175,13 +188,13 @@ export default function Home() {
 							value={url}
 							onChange={(e) => setUrl(e.target.value)}
 							placeholder="https://seusite.com.br"
-							className="flex-1 bg-surface-inset border border-border rounded-lg px-4 py-2.5 text-text placeholder-muted focus:outline-none focus:border-ring"
+							className="flex-1 bg-surface-inset border border-border rounded-lg px-4 py-2.5 text-text placeholder-muted focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition"
 						/>
 						<button
 							type="button"
 							onClick={() => startAudit(url)}
 							disabled={isPending || !url || isPolling}
-							className="bg-accent hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap"
+							className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-lg font-medium shadow-lg shadow-blue-600/30 transition-all cursor-pointer whitespace-nowrap"
 						>
 							{isPending || isPolling ? "Auditando..." : "Auditar"}
 						</button>
@@ -207,24 +220,25 @@ export default function Home() {
 						return (
 							<motion.div
 								key={card.label}
-								className="bg-surface-raised border border-border rounded-xl shadow-sm dark:shadow-none p-4 text-center"
+								className={`${CARD} p-4 text-center`}
 								initial={{ opacity: 0, scale: 0.9 }}
 								animate={{ opacity: 1, scale: 1 }}
+								whileHover={{ y: -4 }}
 								transition={{ duration: 0.3, delay: 0.2 + index * 0.07 }}
 							>
 								<p className="text-muted text-xs mb-1">{card.label}</p>
 								{isPolling ? (
-									<div className="h-8 w-14 mx-auto rounded-lg bg-surface-inset animate-pulse" />
+									<div className="h-10 w-14 mx-auto rounded-lg bg-surface-inset animate-pulse" />
 								) : showNA ? (
 									<p
-										className="text-xl font-bold text-muted"
+										className="text-2xl font-bold text-muted"
 										title="Não foi possível medir"
 									>
 										N/D
 									</p>
 								) : (
 									<p
-										className={`text-3xl md:text-4xl font-bold ${card.value !== undefined ? ScoreColor(card.value) : "text-muted"}`}
+										className={`text-4xl md:text-5xl font-bold tracking-tight ${card.value !== undefined ? ScoreColor(card.value) : "text-muted"}`}
 									>
 										{card.value !== undefined ? (
 											<AnimatedScore value={card.value} />
@@ -249,7 +263,7 @@ export default function Home() {
 							exit={{ opacity: 0, y: -20 }}
 							transition={{ duration: 0.4 }}
 						>
-							<div className="bg-surface-raised border border-border rounded-xl shadow-sm dark:shadow-none p-4 md:p-6">
+							<div className={`${CARD} p-4 md:p-6`}>
 								<h3
 									className={`font-semibold mb-3 flex items-center gap-2 ${currentAudit.status === "completed" ? "text-green-400" : currentAudit.status === "failed" ? "text-red-400" : "text-yellow-400"}`}
 								>
@@ -350,7 +364,7 @@ export default function Home() {
 							</div>
 
 							{isPolling && (
-								<div className="bg-surface-raised border border-border rounded-xl shadow-sm dark:shadow-none p-4 md:p-6 mt-4">
+								<div className={`${CARD} p-4 md:p-6 mt-4`}>
 									<AuditProgress />
 									<div className="space-y-3">
 										{[1, 2, 3, 4, 5].map((i) => (
@@ -369,7 +383,7 @@ export default function Home() {
 									currentAudit.recommendations &&
 									currentAudit.recommendations.length > 0 && (
 										<motion.div
-											className="bg-surface-raised border border-border rounded-xl shadow-sm dark:shadow-none p-4 md:p-6 mt-4"
+											className={`${CARD} p-4 md:p-6 mt-4`}
 											initial={{ opacity: 0, y: 20 }}
 											animate={{ opacity: 1, y: 0 }}
 											transition={{ duration: 0.4 }}
@@ -395,7 +409,7 @@ export default function Home() {
 					) : (
 						<motion.div
 							key="empty-state"
-							className="bg-surface-raised border border-border rounded-xl shadow-sm dark:shadow-none p-8 md:p-12 text-center mb-6"
+							className={`${CARD} p-8 md:p-12 text-center mb-6`}
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 							transition={{ duration: 0.4, delay: 0.3 }}
@@ -411,7 +425,7 @@ export default function Home() {
 				<AnimatePresence>
 					{history && history.length > 0 && (
 						<motion.div
-							className="bg-surface-raised border border-border rounded-xl shadow-sm dark:shadow-none p-4 md:p-6"
+							className={`${CARD} p-4 md:p-6`}
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.4, delay: 0.4 }}

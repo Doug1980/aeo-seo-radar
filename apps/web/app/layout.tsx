@@ -3,7 +3,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const geist = Geist({ subsets: ["latin"] });
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 
 export const metadata: Metadata = {
 	title: "AEO & SEO Radar",
@@ -17,7 +17,7 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="pt-BR" suppressHydrationWarning>
-			<body className={geist.className}>
+			<body className={`${geist.variable} ${geist.className}`}>
 				<Providers>{children}</Providers>
 			</body>
 		</html>

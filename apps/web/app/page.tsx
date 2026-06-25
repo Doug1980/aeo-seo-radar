@@ -134,7 +134,7 @@ export default function Home() {
 	];
 
 	return (
-		<main className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-blue-50 dark:from-gray-950 dark:via-gray-950 dark:to-gray-950 dark:bg-gray-950 text-gray-900 dark:text-white px-4 py-6 md:p-8">
+		<main className="min-h-screen bg-surface text-text px-4 py-6 md:p-8">
 			<div className="max-w-5xl mx-auto">
 				{/* Header */}
 				<motion.div
@@ -144,12 +144,12 @@ export default function Home() {
 					transition={{ duration: 0.4 }}
 				>
 					<div>
-						<h1 className="text-2xl md:text-3xl font-bold dark:text-white text-gray-900">
+						<h1 className="text-2xl md:text-3xl font-bold text-text">
 							<span className="flex items-center gap-2">
 								AEO &amp; SEO Radar <Radar size={28} />
 							</span>
 						</h1>
-						<p className="dark:text-gray-400 text-gray-500 mt-1 text-sm md:text-base">
+						<p className="text-muted mt-1 text-sm md:text-base">
 							Monitoramento e auditoria de presença digital
 						</p>
 					</div>
@@ -161,12 +161,12 @@ export default function Home() {
 
 				{/* Nova Auditoria */}
 				<motion.div
-					className="dark:bg-gray-900 bg-white rounded-xl shadow-sm dark:shadow-none p-4 md:p-6 mb-6 dark:border-gray-800 border-gray-200 border"
+					className="bg-surface-raised rounded-xl shadow-sm dark:shadow-none p-4 md:p-6 mb-6 border border-border"
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.4, delay: 0.1 }}
 				>
-					<h2 className="text-lg font-semibold mb-3 dark:text-white text-gray-900">
+					<h2 className="text-lg font-semibold mb-3 text-text">
 						Nova Auditoria
 					</h2>
 					<div className="flex flex-col sm:flex-row gap-3">
@@ -175,13 +175,13 @@ export default function Home() {
 							value={url}
 							onChange={(e) => setUrl(e.target.value)}
 							placeholder="https://seusite.com.br"
-							className="flex-1 dark:bg-gray-800 bg-gray-100 dark:border-gray-700 border-gray-300 border rounded-lg px-4 py-2.5 dark:text-white text-gray-900 placeholder-gray-500 focus:outline-none focus:border-blue-500"
+							className="flex-1 bg-surface-inset border border-border rounded-lg px-4 py-2.5 text-text placeholder-muted focus:outline-none focus:border-ring"
 						/>
 						<button
 							type="button"
 							onClick={() => startAudit(url)}
 							disabled={isPending || !url || isPolling}
-							className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap"
+							className="bg-accent hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-lg font-medium transition-colors cursor-pointer whitespace-nowrap"
 						>
 							{isPending || isPolling ? "Auditando..." : "Auditar"}
 						</button>
@@ -207,26 +207,24 @@ export default function Home() {
 						return (
 							<motion.div
 								key={card.label}
-								className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl shadow-sm dark:shadow-none p-4 text-center"
+								className="bg-surface-raised border border-border rounded-xl shadow-sm dark:shadow-none p-4 text-center"
 								initial={{ opacity: 0, scale: 0.9 }}
 								animate={{ opacity: 1, scale: 1 }}
 								transition={{ duration: 0.3, delay: 0.2 + index * 0.07 }}
 							>
-								<p className="dark:text-gray-500 text-gray-400 text-xs mb-1">
-									{card.label}
-								</p>
+								<p className="text-muted text-xs mb-1">{card.label}</p>
 								{isPolling ? (
-									<div className="h-8 w-14 mx-auto rounded-lg dark:bg-gray-700 bg-gray-200 animate-pulse" />
+									<div className="h-8 w-14 mx-auto rounded-lg bg-surface-inset animate-pulse" />
 								) : showNA ? (
 									<p
-										className="text-xl font-bold text-gray-500"
+										className="text-xl font-bold text-muted"
 										title="Não foi possível medir"
 									>
 										N/D
 									</p>
 								) : (
 									<p
-										className={`text-3xl md:text-4xl font-bold ${card.value !== undefined ? ScoreColor(card.value) : "text-gray-400"}`}
+										className={`text-3xl md:text-4xl font-bold ${card.value !== undefined ? ScoreColor(card.value) : "text-muted"}`}
 									>
 										{card.value !== undefined ? (
 											<AnimatedScore value={card.value} />
@@ -251,7 +249,7 @@ export default function Home() {
 							exit={{ opacity: 0, y: -20 }}
 							transition={{ duration: 0.4 }}
 						>
-							<div className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl shadow-sm dark:shadow-none p-4 md:p-6">
+							<div className="bg-surface-raised border border-border rounded-xl shadow-sm dark:shadow-none p-4 md:p-6">
 								<h3
 									className={`font-semibold mb-3 flex items-center gap-2 ${currentAudit.status === "completed" ? "text-green-400" : currentAudit.status === "failed" ? "text-red-400" : "text-yellow-400"}`}
 								>
@@ -279,23 +277,17 @@ export default function Home() {
 										</>
 									)}
 								</h3>
-								<div className="text-sm dark:text-gray-400 text-gray-500 space-y-1">
+								<div className="text-sm text-muted space-y-1">
 									<p>
-										<span className="dark:text-gray-300 text-gray-700">
-											Domínio:
-										</span>{" "}
+										<span className="text-text">Domínio:</span>{" "}
 										<span className="break-all">{currentAudit.domain}</span>
 									</p>
 									<p>
-										<span className="dark:text-gray-300 text-gray-700">
-											Status:
-										</span>{" "}
+										<span className="text-text">Status:</span>{" "}
 										{currentAudit.status}
 									</p>
 									<p>
-										<span className="dark:text-gray-300 text-gray-700">
-											Criado em:
-										</span>{" "}
+										<span className="text-text">Criado em:</span>{" "}
 										{formatDate(currentAudit.createdAt)}
 									</p>
 								</div>
@@ -336,7 +328,7 @@ export default function Home() {
 											animate={{ opacity: 1 }}
 											transition={{ delay: 0.3 }}
 										>
-											<p className="text-xs dark:text-gray-500 text-gray-400 mb-2">
+											<p className="text-xs text-muted mb-2">
 												Core Web Vitals (mobile)
 											</p>
 											<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -344,12 +336,10 @@ export default function Home() {
 													<div
 														key={m.label}
 														title={m.hint}
-														className="dark:bg-gray-800 bg-gray-100 dark:border-gray-700 border-gray-200 border rounded-lg px-3 py-2 text-center"
+														className="bg-surface-inset border border-border rounded-lg px-3 py-2 text-center"
 													>
-														<p className="text-[11px] dark:text-gray-500 text-gray-400">
-															{m.label}
-														</p>
-														<p className="text-base font-semibold dark:text-white text-gray-900">
+														<p className="text-[11px] text-muted">{m.label}</p>
+														<p className="text-base font-semibold text-text">
 															{m.value}
 														</p>
 													</div>
@@ -360,13 +350,13 @@ export default function Home() {
 							</div>
 
 							{isPolling && (
-								<div className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl shadow-sm dark:shadow-none p-4 md:p-6 mt-4">
+								<div className="bg-surface-raised border border-border rounded-xl shadow-sm dark:shadow-none p-4 md:p-6 mt-4">
 									<AuditProgress />
 									<div className="space-y-3">
 										{[1, 2, 3, 4, 5].map((i) => (
 											<div
 												key={i}
-												className="h-3 rounded dark:bg-gray-700 bg-gray-200 animate-pulse"
+												className="h-3 rounded bg-surface-inset animate-pulse"
 												style={{ width: `${70 + i * 5}%` }}
 											/>
 										))}
@@ -379,12 +369,12 @@ export default function Home() {
 									currentAudit.recommendations &&
 									currentAudit.recommendations.length > 0 && (
 										<motion.div
-											className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl shadow-sm dark:shadow-none p-4 md:p-6 mt-4"
+											className="bg-surface-raised border border-border rounded-xl shadow-sm dark:shadow-none p-4 md:p-6 mt-4"
 											initial={{ opacity: 0, y: 20 }}
 											animate={{ opacity: 1, y: 0 }}
 											transition={{ duration: 0.4 }}
 										>
-											<h3 className="font-semibold mb-4 text-blue-400">
+											<h3 className="font-semibold mb-4 text-highlight">
 												<span className="flex items-center gap-2">
 													<Bot size={20} /> Recomendações da IA
 												</span>
@@ -405,12 +395,12 @@ export default function Home() {
 					) : (
 						<motion.div
 							key="empty-state"
-							className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl shadow-sm dark:shadow-none p-8 md:p-12 text-center mb-6"
+							className="bg-surface-raised border border-border rounded-xl shadow-sm dark:shadow-none p-8 md:p-12 text-center mb-6"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 							transition={{ duration: 0.4, delay: 0.3 }}
 						>
-							<p className="dark:text-gray-500 text-gray-400 text-base md:text-lg">
+							<p className="text-muted text-base md:text-lg">
 								Insira uma URL acima para iniciar a auditoria
 							</p>
 						</motion.div>
@@ -421,12 +411,12 @@ export default function Home() {
 				<AnimatePresence>
 					{history && history.length > 0 && (
 						<motion.div
-							className="dark:bg-gray-900 bg-white dark:border-gray-800 border-gray-200 border rounded-xl shadow-sm dark:shadow-none p-4 md:p-6"
+							className="bg-surface-raised border border-border rounded-xl shadow-sm dark:shadow-none p-4 md:p-6"
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							transition={{ duration: 0.4, delay: 0.4 }}
 						>
-							<h2 className="text-lg font-semibold mb-4 dark:text-white text-gray-900">
+							<h2 className="text-lg font-semibold mb-4 text-text">
 								Histórico de Auditorias
 							</h2>
 							<div className="space-y-3">
@@ -434,7 +424,7 @@ export default function Home() {
 									<motion.div
 										key={item.id}
 										onClick={() => selectAudit(item.id)}
-										className={`flex items-center justify-between gap-3 p-3 rounded-lg cursor-pointer transition-colors ${item.id === selectedAuditId ? "dark:bg-gray-700 bg-blue-50 border border-blue-500" : "dark:bg-gray-800 bg-gray-100 dark:hover:bg-gray-700 hover:bg-gray-200"}`}
+										className={`flex items-center justify-between gap-3 p-3 rounded-lg cursor-pointer transition-colors ${item.id === selectedAuditId ? "bg-surface-inset border border-accent" : "bg-surface-inset hover:opacity-90"}`}
 										initial={{ opacity: 0, x: -20 }}
 										animate={{ opacity: 1, x: 0 }}
 										transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -442,16 +432,14 @@ export default function Home() {
 										whileTap={{ scale: 0.99 }}
 									>
 										<div className="min-w-0 flex-1">
-											<p className="text-sm dark:text-white text-gray-900 truncate">
-												{item.domain}
-											</p>
-											<p className="text-xs dark:text-gray-500 text-gray-400">
+											<p className="text-sm text-text truncate">{item.domain}</p>
+											<p className="text-xs text-muted">
 												{formatDate(item.createdAt)}
 											</p>
 										</div>
 										<div className="flex items-center gap-2 shrink-0">
 											<span
-												className={`text-sm font-medium ${isPageSpeedUnavailable(item.scores) ? "text-gray-500" : item.scores?.overall !== undefined ? ScoreColor(item.scores.overall) : "text-gray-500"}`}
+												className={`text-sm font-medium ${isPageSpeedUnavailable(item.scores) ? "text-muted" : item.scores?.overall !== undefined ? ScoreColor(item.scores.overall) : "text-muted"}`}
 											>
 												{isPageSpeedUnavailable(item.scores)
 													? "N/D"
@@ -474,7 +462,7 @@ export default function Home() {
 									type="button"
 									onClick={fetchNextPage}
 									disabled={isFetchingNextPage}
-									className="mt-4 w-full text-sm font-medium rounded-lg py-2.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 bg-gray-100 dark:hover:bg-gray-700 hover:bg-gray-200 dark:text-gray-200 text-gray-700"
+									className="mt-4 w-full text-sm font-medium rounded-lg py-2.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-surface-inset hover:opacity-90 text-text"
 								>
 									{isFetchingNextPage ? "Carregando..." : "Carregar mais"}
 								</button>

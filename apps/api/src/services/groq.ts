@@ -56,7 +56,9 @@ Regras:
 				Authorization: `Bearer ${apiKey}`,
 			},
 			body: JSON.stringify({
-				model: "llama-3.3-70b-versatile",
+				// Configurável por env: se a Groq descontinuar o modelo, basta
+				// trocar GROQ_MODEL (sem mexer no código nem redeployar versão).
+				model: process.env["GROQ_MODEL"] ?? "llama-3.3-70b-versatile",
 				messages: [{ role: "user", content: prompt }],
 				temperature: 0.3,
 				max_tokens: 2000,

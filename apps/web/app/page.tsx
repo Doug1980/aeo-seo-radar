@@ -43,6 +43,31 @@ function formatSeconds(ms: number) {
 	return `${(ms / 1000).toFixed(2)} s`;
 }
 
+type MetricTone = "good" | "warn" | "bad";
+
+// Classifica a métrica em bom/precisa-melhorar/ruim a partir dos limites do Google.
+function metricStatus(
+	value: number,
+	goodMax: number,
+	warnMax: number,
+): MetricTone {
+	if (value <= goodMax) return "good";
+	if (value <= warnMax) return "warn";
+	return "bad";
+}
+
+const toneClass: Record<MetricTone, string> = {
+	good: "bg-green-500/15 text-green-400",
+	warn: "bg-yellow-500/15 text-yellow-400",
+	bad: "bg-red-500/15 text-red-400",
+};
+
+const toneLabel: Record<MetricTone, string> = {
+	good: "Bom",
+	warn: "Precisa melhorar",
+	bad: "Ruim",
+};
+
 function buildMetricItems(metrics: {
 	lcp: number;
 	fid: number;
@@ -53,22 +78,34 @@ function buildMetricItems(metrics: {
 		{
 			label: "LCP",
 			value: formatSeconds(metrics.lcp),
-			hint: "Largest Contentful Paint",
+			title: "Velocidade de carregamento",
+			desc: "Quanto tempo leva para a parte principal da página aparecer na tela.",
+			ideal: "ideal: até 2,5 s",
+			status: metricStatus(metrics.lcp, 2500, 4000),
 		},
 		{
 			label: "TTFB",
 			value: `${Math.round(metrics.ttfb)} ms`,
-			hint: "Time To First Byte",
+			title: "Resposta do servidor",
+			desc: "Quanto o servidor do site demora para começar a responder.",
+			ideal: "ideal: até 800 ms",
+			status: metricStatus(metrics.ttfb, 800, 1800),
 		},
 		{
 			label: "TBT/FID",
 			value: `${Math.round(metrics.fid)} ms`,
-			hint: "Bloqueio do main thread",
+			title: "Resposta ao toque",
+			desc: "Quanto a página demora para reagir quando você clica ou toca.",
+			ideal: "ideal: até 200 ms",
+			status: metricStatus(metrics.fid, 200, 600),
 		},
 		{
 			label: "CLS",
 			value: metrics.cls.toFixed(3),
-			hint: "Cumulative Layout Shift",
+			title: "Estabilidade visual",
+			desc: "O quanto os elementos 'pulam' de lugar enquanto a página carrega.",
+			ideal: "ideal: até 0,1",
+			status: metricStatus(metrics.cls, 0.1, 0.25),
 		},
 	];
 }
@@ -355,17 +392,35 @@ export default function Home() {
 											<p className="text-xs text-muted mb-2">
 												Core Web Vitals (mobile)
 											</p>
-											<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+											<div className="grid grid-cols-2 sm:grid-cols-4 gap-3 items-start">
 												{buildMetricItems(currentAudit.metrics).map((m) => (
 													<div
 														key={m.label}
-														title={m.hint}
-														className="bg-surface-inset border border-border rounded-lg px-3 py-2 text-center"
+														className="group bg-surface-inset border border-transparent hover:border-accent rounded-lg px-3 py-2 text-center transition-colors cursor-default"
 													>
 														<p className="text-[11px] text-muted">{m.label}</p>
 														<p className="text-base font-semibold text-text">
 															{m.value}
 														</p>
+
+														{/* Expande ao passar o mouse (grid 0fr -> 1fr) */}
+														<div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-all duration-300 ease-out">
+															<div className="overflow-hidden">
+																<div className="pt-2 text-left">
+																	<p className="text-xs font-semibold text-text">
+																		{m.title}
+																	</p>
+																	<p className="mt-1 text-xs leading-relaxed text-muted">
+																		{m.desc}
+																	</p>
+																	<span
+																		className={`mt-2 inline-block text-[11px] px-2 py-0.5 rounded ${toneClass[m.status]}`}
+																	>
+																		{toneLabel[m.status]} · {m.ideal}
+																	</span>
+																</div>
+															</div>
+														</div>
 													</div>
 												))}
 											</div>

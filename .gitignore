@@ -8,3 +8,8 @@ coverage/
 .turbo/
 .DS_Store
 *.log
+
+# Impeccable — config local da ferramenta (Live Mode), por-desenvolvedor
+.impeccable/
+# Claude Code — config local por-desenvolvedor
+.claude/

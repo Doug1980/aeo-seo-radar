@@ -21,9 +21,9 @@ const CARD =
 	"bg-surface-raised border border-border rounded-2xl shadow-lg shadow-black/5 dark:shadow-black/30";
 
 function ScoreColor(score: number) {
-	if (score >= 90) return "text-green-400";
-	if (score >= 50) return "text-yellow-400";
-	return "text-red-400";
+	if (score >= 90) return "text-green-600 dark:text-green-400";
+	if (score >= 50) return "text-yellow-600 dark:text-yellow-400";
+	return "text-red-600 dark:text-red-400";
 }
 
 function isPageSpeedUnavailable(scores?: { seo: number; performance: number }) {

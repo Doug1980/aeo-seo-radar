@@ -9,13 +9,13 @@
  * nunca cores cruas (dark:bg-gray-900 bg-white).
  */
 :root {
-  --background: #f8fafc;
+  --background: #f2f5f9;
   --foreground: #0f172a;
 
-  --surface: #f8fafc; /* slate-50 */
+  --surface: #f2f5f9; /* off-white levemente azulado */
   --surface-raised: #ffffff;
-  --surface-inset: #f1f5f9; /* slate-100 */
-  --border: #e2e8f0; /* slate-200 */
+  --surface-inset: #e9eef5;
+  --border: #dde5ee;
   --text: #0f172a; /* slate-900 */
   --muted: #64748b; /* slate-500 */
   --accent: #2563eb; /* blue-600 */
@@ -25,13 +25,13 @@
 }
 
 .dark {
-  --background: #020617;
+  --background: #0f172a;
   --foreground: #f1f5f9;
 
-  --surface: #020617; /* slate-950 */
-  --surface-raised: #0f172a; /* slate-900 */
-  --surface-inset: #1e293b; /* slate-800 */
-  --border: #1e293b; /* slate-800 */
+  --surface: #0f172a; /* slate-900 — mais suave que o quase-preto */
+  --surface-raised: #1e293b; /* slate-800 */
+  --surface-inset: #334155; /* slate-700 */
+  --border: #334155; /* slate-700 */
   --text: #f1f5f9; /* slate-100 */
   --muted: #94a3b8; /* slate-400 */
   --highlight: #60a5fa; /* blue-400 */

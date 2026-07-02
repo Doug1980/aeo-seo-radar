@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const spaceGrotesk = Space_Grotesk({
+	subsets: ["latin"],
+	variable: "--font-space-grotesk",
+});
 
 export const metadata: Metadata = {
 	title: "AEO & SEO Radar",
@@ -17,7 +21,9 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="pt-BR" suppressHydrationWarning>
-			<body className={`${geist.variable} ${geist.className}`}>
+			<body
+				className={`${inter.variable} ${spaceGrotesk.variable} ${inter.className}`}
+			>
 				<Providers>{children}</Providers>
 			</body>
 		</html>

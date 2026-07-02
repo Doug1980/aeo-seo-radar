@@ -15,7 +15,7 @@ mais coesa e consistente, **não** redesenhar do zero.
 2. **Tokens, não valores soltos.** Componentes referenciam *tokens* semânticos (`bg-surface`,
    `text-muted`), nunca cores cruas espalhadas (`dark:bg-gray-900 bg-white`).
 3. **Neutro único.** Toda a UI usa a família **slate** (azulada). Sem misturar `gray` e `slate`.
-4. **Azul é o acento.** Uma única cor de marca (azul). Cores semânticas (verde/amarelo/vermelho)
+4. **Índigo é o acento.** Uma única cor de marca (índigo elétrico). Cores semânticas (verde/amarelo/vermelho)
    só comunicam estado, nunca decoram.
 5. **Calma visual.** Bordas sutis no escuro (sombra mínima), respiro generoso, hierarquia por
    tamanho/peso de tipografia antes de cor.
@@ -24,28 +24,29 @@ mais coesa e consistente, **não** redesenhar do zero.
 
 ## 2. Tokens de cor
 
-Família neutra: **slate**. Acento: **blue**. Estados: green / yellow / red.
+Família neutra: **slate arroxeado**. Acento: **índigo**. Estados: green / yellow / red.
+O dark e o light têm identidades próprias (o claro não é um espelho literal do escuro).
 
 ### Superfícies e texto
 
 | Token | Papel | Dark | Light |
 |---|---|---|---|
-| `surface` | Fundo da página | `slate-950` `#020617` | `slate-50` `#f8fafc` |
-| `surface-raised` | Card / painel | `slate-900` `#0f172a` | `#ffffff` |
-| `surface-inset` | Input, item de lista, badge | `slate-800` `#1e293b` | `slate-100` `#f1f5f9` |
-| `border` | Bordas e divisores | `slate-800` `#1e293b` | `slate-200` `#e2e8f0` |
-| `text` | Texto primário | `slate-100` `#f1f5f9` | `slate-900` `#0f172a` |
-| `muted` | Texto secundário / labels | `slate-400` `#94a3b8` | `slate-500` `#64748b` |
+| `surface` | Fundo da página | `#0e1424` | `#f4f5fb` |
+| `surface-raised` | Card / painel | `#171f33` | `#ffffff` |
+| `surface-inset` | Input, item de lista, badge | `#26304a` | `#e9ecf7` |
+| `border` | Bordas e divisores | `#2a3450` | `#dde1f0` |
+| `text` | Texto primário | `#eef1f8` | `#1a1f33` |
+| `muted` | Texto secundário / labels | `#8a93ad` | `#6a7290` |
 
 ### Acento (marca)
 
 | Token | Papel | Valor |
 |---|---|---|
-| `accent` | Botão primário, links, ação | `blue-600` `#2563eb` |
-| `accent-hover` | Hover do primário | `blue-700` `#1d4ed8` |
+| `accent` | Botão primário, links, ação | `indigo-600` `#4f46e5` (light) / `indigo-500` `#6366f1` (dark) |
+| `accent-hover` | Hover do primário | `indigo-700` `#4338ca` (light) / `indigo-400` `#818cf8` (dark) |
 | `accent-fg` | Texto sobre o acento | `#ffffff` |
-| `highlight` | Títulos de seção, ícones de destaque | `blue-400` `#60a5fa` (dark) / `blue-600` (light) |
-| `ring` | Foco (acessibilidade) | `blue-500` `#3b82f6` |
+| `highlight` | Títulos de seção, ícones de destaque | `indigo-300` `#a5b4fc` (dark) / `indigo-600` `#4f46e5` (light) |
+| `ring` | Foco (acessibilidade) | `indigo-500` `#6366f1` |
 
 ### Estados / scores
 
@@ -71,26 +72,29 @@ Assim os componentes usam `bg-surface-raised`, `text-muted`, `border-border`, et
 @variant dark (&:where(.dark, .dark *));
 
 :root {
-  --surface: #f8fafc;
+  --surface: #f4f5fb;
   --surface-raised: #ffffff;
-  --surface-inset: #f1f5f9;
-  --border: #e2e8f0;
-  --text: #0f172a;
-  --muted: #64748b;
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --highlight: #2563eb;
-  --ring: #3b82f6;
+  --surface-inset: #e9ecf7;
+  --border: #dde1f0;
+  --text: #1a1f33;
+  --muted: #6a7290;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --highlight: #4f46e5;
+  --ring: #6366f1;
 }
 
 .dark {
-  --surface: #020617;
-  --surface-raised: #0f172a;
-  --surface-inset: #1e293b;
-  --border: #1e293b;
-  --text: #f1f5f9;
-  --muted: #94a3b8;
-  --highlight: #60a5fa;
+  --surface: #0e1424;
+  --surface-raised: #171f33;
+  --surface-inset: #26304a;
+  --border: #2a3450;
+  --text: #eef1f8;
+  --muted: #8a93ad;
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --highlight: #a5b4fc;
+  --ring: #6366f1;
 }
 
 @theme inline {
@@ -104,7 +108,8 @@ Assim os componentes usam `bg-surface-raised`, `text-muted`, `border-border`, et
   --color-accent-hover: var(--accent-hover);
   --color-highlight: var(--highlight);
   --color-ring: var(--ring);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-space-grotesk);
 }
 
 body {
@@ -114,14 +119,16 @@ body {
 }
 ```
 
-> **Refino pendente:** hoje o `body` usa `Arial, Helvetica`, mas o `@theme` já define Geist.
-> Padronizar em `var(--font-sans)` (Geist) deixa a tipografia coerente com o resto.
+> **Fontes:** display **Space Grotesk** (títulos e número de score, via classe `font-display`) e
+> corpo **Inter**, carregadas com `next/font/google` no `layout.tsx`
+> (variáveis `--font-space-grotesk` / `--font-inter`).
 
 ---
 
 ## 4. Tipografia
 
-Fonte: **Geist Sans** (UI) e **Geist Mono** (valores técnicos/código, opcional).
+Fontes: **Space Grotesk** (display — títulos e números de score, classe `font-display`) e
+**Inter** (corpo — texto, labels, leitura densa). Números sempre com `tabular-nums`.
 
 | Uso | Classe Tailwind | Peso |
 |---|---|---|
@@ -132,7 +139,8 @@ Fonte: **Geist Sans** (UI) e **Geist Mono** (valores técnicos/código, opcional
 | Label / metadado | `text-xs` | `font-normal`, cor `text-muted` |
 
 Regras: no máximo um `font-bold` por bloco visual; nunca usar cor para criar hierarquia que o
-tamanho/peso já resolve.
+tamanho/peso já resolve. Títulos e números de score usam `font-display` (Space Grotesk); corpo e
+labels usam a fonte padrão (Inter).
 
 ---
 

@@ -4,37 +4,41 @@
 
 /*
  * Tokens de design — ver docs/DESIGN.md.
- * Identidade: dark-first, neutro slate, acento azul.
+ * Identidade: dark-first, neutro slate arroxeado, acento índigo elétrico.
+ * Dark e light têm identidades próprias (não é só um espelho).
  * Componentes usam os tokens (bg-surface-raised, text-muted, ...),
  * nunca cores cruas (dark:bg-gray-900 bg-white).
  */
 :root {
-  --background: #f2f5f9;
-  --foreground: #0f172a;
+  --background: #f4f5fb;
+  --foreground: #1a1f33;
 
-  --surface: #f2f5f9; /* off-white levemente azulado */
+  --surface: #f4f5fb; /* off-white frio arroxeado */
   --surface-raised: #ffffff;
-  --surface-inset: #e9eef5;
-  --border: #dde5ee;
-  --text: #0f172a; /* slate-900 */
-  --muted: #64748b; /* slate-500 */
-  --accent: #2563eb; /* blue-600 */
-  --accent-hover: #1d4ed8; /* blue-700 */
-  --highlight: #2563eb; /* blue-600 */
-  --ring: #3b82f6; /* blue-500 */
+  --surface-inset: #e9ecf7;
+  --border: #dde1f0;
+  --text: #1a1f33;
+  --muted: #6a7290;
+  --accent: #4f46e5; /* indigo-600 */
+  --accent-hover: #4338ca; /* indigo-700 */
+  --highlight: #4f46e5; /* indigo-600 */
+  --ring: #6366f1; /* indigo-500 */
 }
 
 .dark {
-  --background: #0f172a;
-  --foreground: #f1f5f9;
+  --background: #0e1424;
+  --foreground: #eef1f8;
 
-  --surface: #0f172a; /* slate-900 — mais suave que o quase-preto */
-  --surface-raised: #1e293b; /* slate-800 */
-  --surface-inset: #334155; /* slate-700 */
-  --border: #334155; /* slate-700 */
-  --text: #f1f5f9; /* slate-100 */
-  --muted: #94a3b8; /* slate-400 */
-  --highlight: #60a5fa; /* blue-400 */
+  --surface: #0e1424; /* slate arroxeado profundo (não quase-preto) */
+  --surface-raised: #171f33;
+  --surface-inset: #26304a;
+  --border: #2a3450;
+  --text: #eef1f8;
+  --muted: #8a93ad;
+  --accent: #6366f1; /* indigo-500 — mais brilhante no escuro */
+  --accent-hover: #818cf8; /* indigo-400 */
+  --highlight: #a5b4fc; /* indigo-300 */
+  --ring: #6366f1; /* indigo-500 */
 }
 
 @theme inline {
@@ -52,14 +56,14 @@
   --color-highlight: var(--highlight);
   --color-ring: var(--ring);
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-space-grotesk);
 }
 
 body {
   background: var(--surface);
   color: var(--text);
-  font-family: var(--font-sans), system-ui, Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
 }
 
 body:has(main[data-page="login"]) {

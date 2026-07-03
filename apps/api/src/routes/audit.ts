@@ -117,12 +117,11 @@ async function resolvesToPublicIp(hostname: string): Promise<boolean> {
 }
 
 const createAuditSchema = z.object({
-	domain: z
-		.string()
-		.url({ message: "Informe uma URL válida" })
-		.refine(isPublicUrl, {
-			message: "Domínios internos ou privados não são permitidos",
-		}),
+	// Zod 4: formatos de string promovidos a top-level (z.url) e erro unificado
+	// via `error` (o antigo `message` foi deprecado).
+	domain: z.url({ error: "Informe uma URL válida" }).refine(isPublicUrl, {
+		error: "Domínios internos ou privados não são permitidos",
+	}),
 });
 
 auditRoutes.post(

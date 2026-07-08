@@ -2,6 +2,39 @@
 const API_BASE =
 	process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:3001";
 
+/**
+ * Erro de API que preserva o status HTTP e o `code` de negócio devolvido pelo
+ * back-end (ex.: "DAILY_LIMIT_EXCEEDED"), para a UI reagir de forma específica.
+ */
+export class ApiError extends Error {
+	status: number;
+	code?: string;
+
+	constructor(message: string, status: number, code?: string) {
+		super(message);
+		this.name = "ApiError";
+		this.status = status;
+		this.code = code;
+	}
+}
+
+/** Lê o corpo JSON de uma resposta de erro e monta um ApiError tipado. */
+export async function toApiError(
+	res: Response,
+	fallback: string,
+): Promise<ApiError> {
+	let message = fallback;
+	let code: string | undefined;
+	try {
+		const body = (await res.json()) as { error?: string; code?: string };
+		if (body.error) message = body.error;
+		code = body.code;
+	} catch {
+		// corpo vazio ou não-JSON: mantém a mensagem de fallback
+	}
+	return new ApiError(message, res.status, code);
+}
+
 interface CachedToken {
 	token: string;
 	expiresAt: number;

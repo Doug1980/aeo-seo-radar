@@ -6,7 +6,14 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { apiFetch } from "../lib/api";
+import { type ApiError, apiFetch, toApiError } from "../lib/api";
+
+/** Cota diária de auditorias do usuário (derivada da tabela `audits`). */
+export interface AuditQuota {
+	limit: number;
+	used: number;
+	remaining: number;
+}
 
 // Cap absoluto de polling: se a auditoria não concluir nesse tempo, paramos
 // (a API também marca audits "running" antigos como "failed").
@@ -44,6 +51,27 @@ export function useAuditHistory() {
 		fetchNextPage: query.fetchNextPage,
 		isFetchingNextPage: query.isFetchingNextPage,
 	};
+}
+
+/**
+ * Cota diária do usuário. Carregada no load da página (para o contador) e
+ * invalidada a cada nova auditoria, refletindo o consumo em tempo real.
+ */
+export function useAuditQuota() {
+	const { data: session } = useSession();
+	const userId = session?.user?.email ?? null;
+
+	return useQuery<AuditQuota>({
+		queryKey: ["audit-quota", userId],
+		enabled: !!userId,
+		refetchOnWindowFocus: true,
+		queryFn: async () => {
+			const res = await apiFetch("/api/v1/audits/quota");
+			if (!res.ok) throw new Error("Erro ao buscar cota");
+			const body = (await res.json()) as { data: AuditQuota };
+			return body.data;
+		},
+	});
 }
 
 export function useAuditById(
@@ -92,18 +120,20 @@ export function useCreateAudit() {
 	const queryClient = useQueryClient();
 	const { data: session } = useSession();
 	const userId = session?.user?.email ?? null;
-	return useMutation<ApiResponse<DomainAudit>, Error, string>({
+	return useMutation<ApiResponse<DomainAudit>, ApiError, string>({
 		mutationFn: async (domain: string) => {
 			const res = await apiFetch("/api/v1/audits", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ domain }),
 			});
-			if (!res.ok) throw new Error("Falha ao iniciar auditoria");
+			if (!res.ok) throw await toApiError(res, "Falha ao iniciar auditoria");
 			return res.json();
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["audit-history", userId] });
+			// Consumiu uma auditoria → atualiza o contador de cota.
+			queryClient.invalidateQueries({ queryKey: ["audit-quota", userId] });
 		},
 	});
 }

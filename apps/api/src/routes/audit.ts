@@ -2,7 +2,7 @@
 import { lookup } from "node:dns/promises";
 import type { ApiResponse, DomainAudit } from "@aeo-seo-radar/shared";
 import { zValidator } from "@hono/zod-validator";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { db } from "../db/index.js";
@@ -24,6 +24,37 @@ auditRoutes.use("*", requireAuth);
  * precisar de um worker/cron dedicado.
  */
 const STALE_AUDIT_MS = 3 * 60_000;
+
+/**
+ * Cota diária de auditorias por usuário. Cada auditoria dispara chamadas
+ * externas pagas (Google PageSpeed + Groq), então limitamos o volume por dia
+ * para conter custo. Configurável via env, sem precisar de redeploy de código.
+ */
+function dailyAuditLimit(): number {
+	return Number(process.env["DAILY_AUDIT_LIMIT"]) || 5;
+}
+
+/** Início do dia atual em UTC — referência para a janela diária. */
+function startOfUtcDay(): Date {
+	const d = new Date();
+	d.setUTCHours(0, 0, 0, 0);
+	return d;
+}
+
+/**
+ * Conta quantas auditorias o usuário criou desde a meia-noite (UTC).
+ * A cota deriva da própria tabela `audits` — nada de contador paralelo: é
+ * fonte única de verdade, sobrevive a restart e funciona multi-instância.
+ */
+async function countAuditsToday(userId: string): Promise<number> {
+	const [row] = await db
+		.select({ count: sql<number>`count(*)::int` })
+		.from(audits)
+		.where(
+			and(eq(audits.userId, userId), gte(audits.createdAt, startOfUtcDay())),
+		);
+	return row?.count ?? 0;
+}
 
 function toAuditResponse(audit: typeof audits.$inferSelect): DomainAudit {
 	return {
@@ -132,6 +163,21 @@ auditRoutes.post(
 		const { domain } = c.req.valid("json");
 		const userId = c.get("userId");
 
+		// Cota diária: barra antes de qualquer trabalho caro (DNS + APIs externas).
+		const limit = dailyAuditLimit();
+		const usedToday = await countAuditsToday(userId);
+		if (usedToday >= limit) {
+			return c.json(
+				{
+					error: "Limite diário de auditorias atingido.",
+					code: "DAILY_LIMIT_EXCEEDED",
+					limit,
+					remaining: 0,
+				},
+				429,
+			);
+		}
+
 		// Checagem anti-SSRF baseada em DNS (resolve o host antes de buscar)
 		const { hostname } = new URL(domain);
 		if (!(await resolvesToPublicIp(hostname))) {
@@ -212,6 +258,18 @@ auditRoutes.get("/", async (c) => {
 	};
 
 	return c.json(response);
+});
+
+/**
+ * Cota diária do usuário. Definida ANTES de "/:id" para não ser capturada
+ * pela rota paramétrica (senão "quota" seria tratado como um id).
+ */
+auditRoutes.get("/quota", async (c) => {
+	const userId = c.get("userId");
+	const limit = dailyAuditLimit();
+	const used = await countAuditsToday(userId);
+	const remaining = Math.max(limit - used, 0);
+	return c.json({ data: { limit, used, remaining } });
 });
 
 auditRoutes.get("/:id", async (c) => {

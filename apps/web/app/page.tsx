@@ -6,16 +6,21 @@ import {
 	Bot,
 	CheckCircle2,
 	Loader2,
+	Mail,
 	Radar,
 	Search,
 	XCircle,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import AuditProgress from "./components/AuditProgress";
 import RecommendationCard from "./components/RecommendationCard";
 import ThemeToggle from "./components/ThemeToggle";
 import UserMenu from "./components/UserMenu";
 import { useAuditFlow } from "./hooks/useAuditFlow";
+import { useAuditQuota } from "./hooks/useAudit";
+
+const ADMIN_EMAIL = "douglas.dev.salazar@gmail.com";
 
 // Classe base dos cards/painéis — elevação + cantos do novo visual.
 const CARD =
@@ -285,6 +290,14 @@ function StatBar({
 export default function Home() {
 	const [url, setUrl] = useState("");
 
+	const { data: session } = useSession();
+	const name = session?.user?.name?.trim() || "usuário";
+
+	const { data: quota } = useAuditQuota();
+	const limitReached = quota?.remaining === 0;
+
+	const [showLimitModal, setShowLimitModal] = useState(false);
+
 	const {
 		currentAudit,
 		history,
@@ -297,7 +310,22 @@ export default function Home() {
 		hasNextPage,
 		fetchNextPage,
 		isFetchingNextPage,
-	} = useAuditFlow();
+	} = useAuditFlow({
+		onCreateError: (err) => {
+			// Corrida server-side (cota mudou entre o load e o clique): abre o modal.
+			if (err.code === "DAILY_LIMIT_EXCEEDED") setShowLimitModal(true);
+		},
+	});
+
+	// Cota zerada → abre o modal na hora, sem gastar um request que voltaria 429.
+	function handleAudit() {
+		if (!url || isPending || isPolling) return;
+		if (limitReached) {
+			setShowLimitModal(true);
+			return;
+		}
+		startAudit(url);
+	}
 
 	const psDown = isPageSpeedUnavailable(currentAudit?.scores);
 	const overall = currentAudit?.scores?.overall;
@@ -331,6 +359,52 @@ export default function Home() {
 					"radial-gradient(1100px 480px at 50% -10%, rgba(99,102,241,0.20), transparent 68%), var(--surface)",
 			}}
 		>
+			{/* Modal de limite diário — bloqueia a ação e exige reconhecimento. */}
+			{showLimitModal && (
+				<div
+					className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
+					onClick={() => setShowLimitModal(false)}
+				>
+					<div
+						className="w-full max-w-md rounded-2xl border border-border bg-surface-raised p-6 text-center shadow-2xl"
+						onClick={(e) => e.stopPropagation()}
+					>
+						<div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10">
+							<AlertTriangle size={26} className="text-red-400" />
+						</div>
+						<h2 className="text-lg font-semibold text-text mb-2">
+							Limite diário atingido
+						</h2>
+						<p className="text-sm text-muted leading-relaxed mb-5">
+							Prezado <span className="font-medium text-text">{name}</span>, suas
+							consultas atingiram o limite diário. Caso precise de um aumento no
+							limite de consultas, por favor, entre em contato com o
+							administrativo pelo e-mail:
+						</p>
+						<div className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-inset px-3 py-3 mb-5">
+							<Mail size={18} className="text-indigo-400 shrink-0" />
+							<span className="text-sm font-medium text-indigo-300 break-all">
+								{ADMIN_EMAIL}
+							</span>
+						</div>
+						<div className="flex gap-2.5">
+							<button
+								type="button"
+								onClick={() => setShowLimitModal(false)}
+								className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium text-text hover:bg-surface-inset transition-colors cursor-pointer"
+							>
+								Fechar
+							</button>
+							<a
+								href={`mailto:${ADMIN_EMAIL}`}
+								className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 py-2.5 text-sm font-medium text-white hover:from-indigo-500 hover:to-violet-500 transition-all cursor-pointer"
+							>
+								Falar com o administrativo
+							</a>
+						</div>
+					</div>
+				</div>
+			)}
 			<div className="max-w-5xl mx-auto">
 				{/* Header */}
 				<motion.div
@@ -376,22 +450,38 @@ export default function Home() {
 							value={url}
 							onChange={(e) => setUrl(e.target.value)}
 							onKeyDown={(e) => {
-								if (e.key === "Enter" && url && !isPending && !isPolling)
-									startAudit(url);
+								if (e.key === "Enter") handleAudit();
 							}}
 							placeholder="https://seusite.com.br"
 							className="flex-1 bg-transparent px-1 py-2 text-base md:text-lg text-text placeholder-muted focus:outline-none"
 						/>
 						<button
 							type="button"
-							onClick={() => startAudit(url)}
+							onClick={handleAudit}
 							disabled={isPending || !url || isPolling}
 							className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 md:px-7 py-2.5 rounded-xl font-medium shadow-lg shadow-indigo-600/30 transition-all cursor-pointer whitespace-nowrap"
 						>
 							{isPending || isPolling ? "Auditando..." : "Auditar"}
 						</button>
 					</div>
-					{error && <p className="text-red-400 text-sm mt-2 px-1">{error.message}</p>}
+					{/* Erro inline (exceto cota diária, que já é comunicada via modal). */}
+					{error && error.code !== "DAILY_LIMIT_EXCEEDED" && (
+						<p className="text-red-400 text-sm mt-2 px-1">{error.message}</p>
+					)}
+					{/* Contador de cota diária — presente desde a primeira auditoria. */}
+					{quota &&
+						(limitReached ? (
+							<p className="text-amber-500 text-sm mt-2 px-1">
+								Você atingiu o limite de {quota.limit} auditorias hoje. A cota
+								renova amanhã.
+							</p>
+						) : (
+							<p className="text-muted text-sm mt-2 px-1">
+								Você tem{" "}
+								<span className="font-medium text-text">{quota.remaining}</span>{" "}
+								de {quota.limit} auditorias restantes hoje
+							</p>
+						))}
 				</motion.div>
 
 				{/* Painel de scores — anel herói + barras de apoio */}

@@ -6,6 +6,9 @@ vi.mock("../services/auditService.js", () => ({
 }));
 
 process.env.AUTH_API_SECRET = process.env.AUTH_API_SECRET ?? "test-secret";
+// Limite alto no ambiente de teste: evita que a cota diária (lida em runtime)
+// dispare 429 caso o banco de teste acumule auditorias no mesmo dia.
+process.env.DAILY_AUDIT_LIMIT = process.env.DAILY_AUDIT_LIMIT ?? "100000";
 
 import { app } from "../index.js";
 

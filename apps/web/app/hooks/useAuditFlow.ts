@@ -1,14 +1,20 @@
 import type { DomainAudit } from "@aeo-seo-radar/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import type { ApiError } from "../lib/api";
 import { useAuditById, useAuditHistory, useCreateAudit } from "./useAudit";
+
+interface UseAuditFlowOptions {
+	/** Disparado quando a criação da auditoria falha (ex.: cota diária). */
+	onCreateError?: (error: ApiError) => void;
+}
 
 interface UseAuditFlowReturn {
 	currentAudit: DomainAudit | undefined;
 	history: DomainAudit[] | undefined;
 	isPolling: boolean;
 	isPending: boolean;
-	error: Error | null;
+	error: ApiError | null;
 	selectedAuditId: string | null;
 	selectAudit: (id: string) => void;
 	startAudit: (url: string) => void;
@@ -17,7 +23,9 @@ interface UseAuditFlowReturn {
 	isFetchingNextPage: boolean;
 }
 
-export function useAuditFlow(): UseAuditFlowReturn {
+export function useAuditFlow(
+	options: UseAuditFlowOptions = {},
+): UseAuditFlowReturn {
 	const [selectedAuditId, setSelectedAuditId] = useState<string | null>(null);
 	const [isPolling, setIsPolling] = useState(false);
 
@@ -43,6 +51,9 @@ export function useAuditFlow(): UseAuditFlowReturn {
 			onSuccess: (res) => {
 				setSelectedAuditId(res.data.id);
 				setIsPolling(true);
+			},
+			onError: (err) => {
+				options.onCreateError?.(err);
 			},
 		});
 	}

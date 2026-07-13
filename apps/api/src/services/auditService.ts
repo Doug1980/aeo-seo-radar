@@ -5,7 +5,7 @@ import { db } from "../db/index.js";
 import { audits } from "../db/schema.js";
 import { generateRecommendations } from "./groq.js";
 import { runPageSpeedAudit } from "./pagespeed.js";
-import { analyzeSchema } from "./schema.js";
+import { analyzeSchema, emptyFindings } from "./schema.js";
 
 declare const console: {
 	log: (...args: any[]) => void;
@@ -54,6 +54,7 @@ export async function startBackgroundAudit(
 					types: [] as string[],
 					score: 0,
 					isLikelyCSR: false,
+					findings: emptyFindings(),
 				};
 			}),
 		]);
@@ -100,7 +101,11 @@ export async function startBackgroundAudit(
 
 		let recommendations: Recommendation[] = [];
 		try {
-			recommendations = await generateRecommendations(domain, scores);
+			recommendations = await generateRecommendations(
+				domain,
+				scores,
+				schemaResult.findings,
+			);
 		} catch (err) {
 			console.error("Groq error:", err);
 		}
@@ -117,6 +122,7 @@ export async function startBackgroundAudit(
 				completedAt: new Date(),
 				scores,
 				metrics,
+				findings: schemaResult.findings,
 				recommendations,
 			})
 			.where(eq(audits.id, auditId));

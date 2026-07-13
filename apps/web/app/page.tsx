@@ -14,11 +14,13 @@ import {
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import AuditProgress from "./components/AuditProgress";
+import PromptCard from "./components/PromptCard";
 import RecommendationCard from "./components/RecommendationCard";
 import ThemeToggle from "./components/ThemeToggle";
 import UserMenu from "./components/UserMenu";
 import { useAuditFlow } from "./hooks/useAuditFlow";
 import { useAuditQuota } from "./hooks/useAudit";
+import { isQuickWin, prioritize } from "./lib/priority";
 
 const ADMIN_EMAIL = "douglas.dev.salazar@gmail.com";
 
@@ -673,17 +675,24 @@ export default function Home() {
 												</span>
 											</h3>
 											<div className="space-y-3">
-												{currentAudit.recommendations.map((rec, i) => (
-													<RecommendationCard
-														key={rec.id ?? i}
-														recommendation={rec}
-														index={i}
-													/>
-												))}
+												{prioritize(currentAudit.recommendations).map(
+													(rec, i) => (
+														<RecommendationCard
+															key={rec.id ?? i}
+															recommendation={rec}
+															index={i}
+															quickWin={isQuickWin(rec)}
+														/>
+													),
+												)}
 											</div>
 										</motion.div>
 									)}
 							</AnimatePresence>
+
+							{!isPolling && currentAudit.status === "completed" && (
+								<PromptCard audit={currentAudit} />
+							)}
 						</motion.div>
 					) : (
 						<motion.div

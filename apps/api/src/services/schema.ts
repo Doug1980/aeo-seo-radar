@@ -1,8 +1,11 @@
+import type { AuditFindings } from "@aeo-seo-radar/shared";
+
 export interface SchemaResult {
 	hasSchema: boolean;
 	types: string[];
 	score: number;
 	isLikelyCSR: boolean;
+	findings: AuditFindings;
 }
 
 /**
@@ -50,6 +53,97 @@ function detectCSR(html: string): boolean {
 	);
 }
 
+/** Remove tags e normaliza espaços de um trecho de HTML. */
+function stripTags(s: string): string {
+	return s
+		.replace(/<[^>]+>/g, " ")
+		.replace(/\s+/g, " ")
+		.trim();
+}
+
+/** Lê o valor de um atributo dentro de uma tag isolada. */
+function attrValue(tag: string, name: string): string | null {
+	const m = tag.match(new RegExp(`${name}\\s*=\\s*["']([^"']*)["']`, "i"));
+	return m?.[1]?.trim() ?? null;
+}
+
+/**
+ * Retorna o `content` de uma <meta name|property="key">, em qualquer ordem
+ * de atributos. Usado para description, Open Graph, Twitter, robots, viewport.
+ */
+function metaContent(html: string, key: string): string | null {
+	const re = new RegExp(
+		`<meta[^>]*(?:name|property)\\s*=\\s*["']${key}["'][^>]*>`,
+		"i",
+	);
+	const tag = html.match(re)?.[0];
+	return tag ? attrValue(tag, "content") : null;
+}
+
+/**
+ * Extrai os sinais on-page do HTML servido (sem executar JS). É best-effort
+ * por regex — mesma abordagem já usada para JSON-LD/CSR neste módulo.
+ */
+function extractOnPageSignals(
+	html: string,
+): Omit<AuditFindings, "schemaTypes" | "isLikelyCSR"> {
+	const titleRaw = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? null;
+	const title = titleRaw ? stripTags(titleRaw) : null;
+
+	const metaDescription = metaContent(html, "description");
+
+	const h1s = [...html.matchAll(/<h1[^>]*>([\s\S]*?)<\/h1>/gi)];
+	const h1Count = h1s.length;
+	const h1Text = h1Count > 0 ? stripTags(h1s[0]?.[1] ?? "") || null : null;
+
+	const canonicalTag = html.match(
+		/<link[^>]*rel=["']canonical["'][^>]*>/i,
+	)?.[0];
+	const canonical = canonicalTag ? attrValue(canonicalTag, "href") : null;
+
+	const lang =
+		html.match(/<html[^>]*\blang=["']([^"']*)["']/i)?.[1]?.trim() ?? null;
+
+	return {
+		title,
+		titleLength: title?.length ?? 0,
+		metaDescription,
+		metaDescriptionLength: metaDescription?.length ?? 0,
+		h1Count,
+		h1Text,
+		canonical,
+		lang,
+		hasOgTitle: metaContent(html, "og:title") !== null,
+		hasOgDescription: metaContent(html, "og:description") !== null,
+		hasOgImage: metaContent(html, "og:image") !== null,
+		hasTwitterCard: metaContent(html, "twitter:card") !== null,
+		hasViewport: metaContent(html, "viewport") !== null,
+		robots: metaContent(html, "robots"),
+	};
+}
+
+/** Findings vazios — usados quando o fetch da página falha. */
+export function emptyFindings(): AuditFindings {
+	return {
+		title: null,
+		titleLength: 0,
+		metaDescription: null,
+		metaDescriptionLength: 0,
+		h1Count: 0,
+		h1Text: null,
+		canonical: null,
+		lang: null,
+		hasOgTitle: false,
+		hasOgDescription: false,
+		hasOgImage: false,
+		hasTwitterCard: false,
+		hasViewport: false,
+		robots: null,
+		schemaTypes: [],
+		isLikelyCSR: false,
+	};
+}
+
 export async function analyzeSchema(url: string): Promise<SchemaResult> {
 	const res = await fetch(url, {
 		headers: {
@@ -58,7 +152,13 @@ export async function analyzeSchema(url: string): Promise<SchemaResult> {
 		signal: AbortSignal.timeout(10000),
 	});
 	if (!res.ok) {
-		return { hasSchema: false, types: [], score: 0, isLikelyCSR: false };
+		return {
+			hasSchema: false,
+			types: [],
+			score: 0,
+			isLikelyCSR: false,
+			findings: emptyFindings(),
+		};
 	}
 	const html = await res.text();
 
@@ -101,5 +201,13 @@ export async function analyzeSchema(url: string): Promise<SchemaResult> {
 	if (hasCanonical) score += 5;
 	if (hasMetaDescription) score += 5;
 	if (score > 100) score = 100;
-	return { hasSchema, types: [...new Set(types)], score, isLikelyCSR };
+
+	const uniqueTypes = [...new Set(types)];
+	const findings: AuditFindings = {
+		...extractOnPageSignals(html),
+		schemaTypes: uniqueTypes,
+		isLikelyCSR,
+	};
+
+	return { hasSchema, types: uniqueTypes, score, isLikelyCSR, findings };
 }

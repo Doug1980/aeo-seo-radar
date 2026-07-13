@@ -71,6 +71,7 @@ function toAuditResponse(audit: typeof audits.$inferSelect): DomainAudit {
 			schemaMarkup: 0,
 		},
 		metrics: audit.metrics ?? undefined,
+		findings: audit.findings ?? undefined,
 		recommendations: audit.recommendations ?? [],
 	};
 }

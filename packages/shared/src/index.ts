@@ -49,6 +49,30 @@ export interface AuditMetrics {
 	ttfb: number;
 }
 
+/**
+ * Sinais on-page extraídos do HTML servido (sem executar JS). Alimentam
+ * recomendações específicas, o prompt de correção e o relatório. Opcional:
+ * auditorias anteriores a esta feature virão sem `findings`.
+ */
+export interface AuditFindings {
+	title: string | null;
+	titleLength: number;
+	metaDescription: string | null;
+	metaDescriptionLength: number;
+	h1Count: number;
+	h1Text: string | null;
+	canonical: string | null;
+	lang: string | null;
+	hasOgTitle: boolean;
+	hasOgDescription: boolean;
+	hasOgImage: boolean;
+	hasTwitterCard: boolean;
+	hasViewport: boolean;
+	robots: string | null;
+	schemaTypes: string[];
+	isLikelyCSR: boolean;
+}
+
 export interface DomainAudit {
 	id: string;
 	domain: string;
@@ -58,6 +82,7 @@ export interface DomainAudit {
 	scores: AuditScores;
 	metrics?: AuditMetrics;
 	recommendations: Recommendation[];
+	findings?: AuditFindings;
 }
 
 // ─── API envelope ───────────────────────────────────────────────

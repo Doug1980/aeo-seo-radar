@@ -14,10 +14,10 @@ Analisa domínios, valida dados estruturados (schema markup), audita performance
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-06B6D4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
 
 [![Deploy](https://img.shields.io/badge/deploy-Vercel-black?style=flat-square&logo=vercel)](https://aeo-seo-radar.vercel.app)
-[![API](https://img.shields.io/badge/API-Railway-7B2FBE?style=flat-square&logo=railway)](https://aeo-seo-radarapi-production.up.railway.app/health)
+[![API](https://img.shields.io/badge/API-Render-46E3B7?style=flat-square&logo=render)](https://aeo-seo-radar.onrender.com/health)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 
-[Demo ao vivo](https://aeo-seo-radar.vercel.app) · [API Health](https://aeo-seo-radarapi-production.up.railway.app/health)
+[Demo ao vivo](https://aeo-seo-radar.vercel.app) · [API Health](https://aeo-seo-radar.onrender.com/health)
 
 </div>
 
@@ -71,6 +71,9 @@ O projeto foi desenvolvido como portfólio técnico, com foco em boas práticas 
 - **Auditoria de domínios** — seis scores num só relatório: Geral, SEO, AEO, Performance, Acessibilidade e Boas Práticas
 - **Core Web Vitals** — LCP, TTFB, TBT/FID e CLS coletados via PageSpeed e exibidos no dashboard
 - **Recomendações via IA** — até 8 sugestões práticas geradas pelo Groq (Llama 3.3 70B), com severidade, impacto, esforço e passos acionáveis
+- **Achados on-page + plano priorizado** — extrai sinais do HTML servido (title, meta description, H1, canonical, Open Graph, viewport, robots) para gerar recomendações específicas, e ordena tudo por impacto/esforço destacando os "ganhos rápidos"
+- **Prompt de correção pronto para IA** — monta um prompt com o diagnóstico completo (scores, problemas detectados e recomendações) pronto para colar no ChatGPT/Claude e receber as correções aplicáveis
+- **Cota diária de auditorias** — limite configurável de auditorias por dia por usuário (protege o custo das APIs externas), com contador na interface e modal de aviso ao atingir o limite
 - **Schema Markup (AEO)** — detecta JSON-LD e Open Graph e calcula score de Answer Engine Optimization
 - **Detecção de CSR** — identifica sites renderizados no cliente (React/Vue/Angular sem SSR) e avisa que a análise pode estar incompleta, explicando como resolver
 - **PageSpeed Insights** — integração com a API oficial do Google
@@ -84,7 +87,7 @@ O projeto foi desenvolvido como portfólio técnico, com foco em boas práticas 
 
 ## Segurança
 
-- **Rate limiting** — limite de requisições por usuário no endpoint de auditoria (proteção contra abuso e estouro de cota das APIs externas)
+- **Rate limiting + cota diária** — limite de requisições por minuto e cota diária de auditorias por usuário no endpoint de auditoria (proteção contra abuso e estouro de cota das APIs externas)
 - **Validação anti-SSRF** — bloqueio de URLs internas/privadas (localhost, IPs privados, endpoint de metadata de cloud) em produção, com **resolução de DNS** do host antes de buscar (fecha a brecha de DNS rebinding, em que um domínio público resolve para um IP interno)
 - **Validação de entrada** — schema Zod em todas as entradas; validação de UUID nas rotas de detalhe
 - **Autenticação da API via JWT** — o front assina um JWT curto (15 min) a partir da sessão NextAuth, com segredo compartilhado (`AUTH_API_SECRET`); a API valida assinatura e expiração. Substitui o antigo header `x-user-id`, que era falsificável
@@ -102,7 +105,7 @@ O projeto foi desenvolvido como portfólio técnico, com foco em boas práticas 
 ├──────────────────────┬──────────────────────────────────┤
 │   apps/web           │   apps/api                        │
 │   Next.js 16         │   Hono + Node.js                  │
-│   Vercel             │   Railway                         │
+│   Vercel             │   Render                          │
 ├──────────────────────┴──────────────────────────────────┤
 │                   Neon (PostgreSQL)                      │
 │      tabelas: audits · user · account · session ·        │
@@ -149,7 +152,7 @@ POST /api/v1/audits
 | Testes | Vitest |
 | CI/CD | GitHub Actions |
 | Deploy Frontend | Vercel |
-| Deploy Backend | Railway |
+| Deploy Backend | Render |
 
 ---
 
@@ -229,7 +232,7 @@ AUTH_API_SECRET=...   # mesmo segredo da API (assina o JWT da sessão)
 O projeto está configurado para **deploy automático** a cada push na branch `main`:
 
 - **Vercel** — frontend Next.js (zero config para monorepo)
-- **Railway** — API Hono com build via `tsc`
+- **Render** — API Hono (Web Service Node); migrations do Drizzle aplicadas no build a cada deploy
 - **Neon** — banco PostgreSQL serverless (free tier permanente)
 
 ---
@@ -254,6 +257,7 @@ O projeto está configurado para **deploy automático** a cada push na branch `m
 |---|---|---|
 | POST | `/api/v1/audits` | Inicia uma nova auditoria (com rate limit) |
 | GET | `/api/v1/audits` | Lista auditorias do usuário (paginado: `?limit` até 50, `?offset`) |
+| GET | `/api/v1/audits/quota` | Cota diária do usuário (`limit`, `used`, `remaining`) |
 | GET | `/api/v1/audits/:id` | Detalhe de uma auditoria |
 | GET | `/health` | Health check |
 

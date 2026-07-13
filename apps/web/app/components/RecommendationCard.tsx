@@ -33,9 +33,11 @@ const levelLabel: Record<string, string> = {
 export default function RecommendationCard({
 	recommendation: rec,
 	index,
+	quickWin = false,
 }: {
 	recommendation: Recommendation;
 	index: number;
+	quickWin?: boolean;
 }) {
 	const [open, setOpen] = useState(false);
 
@@ -75,6 +77,11 @@ export default function RecommendationCard({
 					)}
 
 					<div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+						{quickWin && (
+							<span className="rounded px-2 py-0.5 bg-green-500/15 text-green-400 font-medium">
+								Ganho rápido
+							</span>
+						)}
 						<span className={`font-medium ${s.text}`}>{s.label}</span>
 						<span className="rounded px-2 py-0.5 bg-surface-raised text-muted">
 							{category}

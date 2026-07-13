@@ -1,6 +1,7 @@
 // apps/api/src/services/groq.ts
 import { randomUUID } from "node:crypto";
 import {
+	type AuditFindings,
 	type AuditScores,
 	llmResponseSchema,
 	type Recommendation,
@@ -10,14 +11,37 @@ interface GroqResponse {
 	choices: { message: { content: string } }[];
 }
 
+/** Descreve os problemas concretos do HTML para o modelo priorizar. */
+function describeFindings(f: AuditFindings): string {
+	const lines = [
+		`- Title: ${f.title ? `"${f.title}" (${f.titleLength} caracteres)` : "AUSENTE"}`,
+		`- Meta description: ${f.metaDescription ? `presente (${f.metaDescriptionLength} caracteres)` : "AUSENTE"}`,
+		`- H1 na página: ${f.h1Count === 0 ? "nenhum" : f.h1Count === 1 ? "1" : `${f.h1Count} (mais de um)`}`,
+		`- Canonical: ${f.canonical ? "presente" : "ausente"}`,
+		`- Atributo lang no <html>: ${f.lang ?? "ausente"}`,
+		`- Meta robots: ${f.robots ?? "não definida"}`,
+		`- Open Graph: título ${f.hasOgTitle ? "sim" : "não"}, descrição ${f.hasOgDescription ? "sim" : "não"}, imagem ${f.hasOgImage ? "sim" : "não"}`,
+		`- Twitter Card: ${f.hasTwitterCard ? "sim" : "não"}`,
+		`- Viewport (mobile): ${f.hasViewport ? "sim" : "não"}`,
+		`- Schema JSON-LD: ${f.schemaTypes.length ? f.schemaTypes.join(", ") : "nenhum"}`,
+	];
+	if (f.isLikelyCSR) {
+		lines.push(
+			"- ATENÇÃO: o site parece renderizado no cliente (CSR); o HTML inicial pode estar subestimado.",
+		);
+	}
+	return lines.join("\n");
+}
+
 export async function generateRecommendations(
 	domain: string,
 	scores: AuditScores,
+	findings: AuditFindings,
 ): Promise<Recommendation[]> {
 	const apiKey = process.env["GROQ_API_KEY"] ?? "";
 
 	const prompt = `Você é um auditor sênior de SEO e AEO (Answer Engine Optimization).
-Analise os scores do domínio "${domain}" e gere recomendações acionáveis.
+Analise o diagnóstico do domínio "${domain}" e gere recomendações acionáveis.
 
 Scores:
 - Performance: ${scores.performance}/100
@@ -25,6 +49,9 @@ Scores:
 - AEO: ${scores.aeo}/100
 - Schema Markup: ${scores.schemaMarkup}/100
 - Score Geral: ${scores.overall}/100
+
+Problemas detectados no HTML servido:
+${describeFindings(findings)}
 
 Responda SOMENTE com um objeto JSON válido (sem markdown, sem cercas de código):
 {
@@ -43,6 +70,8 @@ Responda SOMENTE com um objeto JSON válido (sem markdown, sem cercas de código
 
 Regras:
 - No máximo 8 recomendações, priorizando severity "critical".
+- Baseie as recomendações nos "Problemas detectados" acima — cite o que
+  realmente falta (ex.: meta description ausente, 0 H1, falta schema FAQPage).
 - steps devem ser implementáveis, nunca genéricos.
 - Escreva em português do Brasil.
 - Não invente métricas além das fornecidas.`;

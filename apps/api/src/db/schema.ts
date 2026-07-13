@@ -1,4 +1,8 @@
-import type { AuditMetrics, Recommendation } from "@aeo-seo-radar/shared";
+import type {
+	AuditFindings,
+	AuditMetrics,
+	Recommendation,
+} from "@aeo-seo-radar/shared";
 import {
 	jsonb,
 	pgEnum,
@@ -32,6 +36,7 @@ export const audits = pgTable("audits", {
 	status: auditStatusEnum("status").notNull().default("pending"),
 	scores: jsonb("scores").$type<AuditScores>(),
 	metrics: jsonb("metrics").$type<AuditMetrics>(),
+	findings: jsonb("findings").$type<AuditFindings>(),
 	recommendations: jsonb("recommendations")
 		.$type<Recommendation[]>()
 		.notNull()
